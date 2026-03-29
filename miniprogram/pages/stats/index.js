@@ -56,7 +56,7 @@ Page({
         fetchAllDocs("user_course_plans", {
           where: { openid, status: "active" },
           fields: {
-            weekday: true,
+            weekdays: true,
             startDate: true,
             endDate: true,
           },

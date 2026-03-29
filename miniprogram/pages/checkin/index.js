@@ -7,12 +7,10 @@ const {
 } = require("../../utils/learning");
 const { ensureLogin } = require("../../utils/auth");
 const { countDocs, fetchAllDocs, fetchDocs } = require("../../utils/database");
-const { doesPlanOccurOnDate } = require("../../utils/schedule");
+const { doesPlanOccurOnDate, getPlanWeekdays } = require("../../utils/schedule");
 
 const db = wx.cloud.database();
 const _ = db.command;
-
-const WEEKDAY_MAP = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 function pad(value) {
   return `${value}`.padStart(2, "0");
@@ -201,7 +199,6 @@ Page({
     });
 
     const now = new Date();
-    const weekday = WEEKDAY_MAP[now.getDay()];
     const todayDateKey = getDateKey(now);
 
     try {
@@ -214,7 +211,6 @@ Page({
         where: {
           openid,
           status: "active",
-          weekday,
         },
         orderBy: {
           field: "startTime",
@@ -223,7 +219,10 @@ Page({
         pageSize: 100,
       });
 
-      const sessions = data.filter((item) => doesPlanOccurOnDate(item, todayDateKey)).map(mapPlanToSession);
+      const sessions = data
+        .filter((item) => getPlanWeekdays(item).length)
+        .filter((item) => doesPlanOccurOnDate(item, todayDateKey))
+        .map(mapPlanToSession);
       await this.mergeTodayCheckins(sessions, todayDateKey);
     } catch (error) {
       console.error("读取今日排期失败", error);

@@ -21,7 +21,7 @@
       </view>
       <view class="form-item">
         <view class="form-label">上课星期</view>
-        <view class="item-subtitle" style="margin-top: 0; margin-bottom: 14rpx;">{{mode === 'edit' ? '编辑时修改这条排期对应的星期。' : '可多选，保存后会自动生成多条排期。'}}</view>
+        <view class="item-subtitle" style="margin-top: 0; margin-bottom: 14rpx;">{{mode === 'edit' ? '编辑这一个阶段的排期块，可同时覆盖多个星期。' : '可多选，保存后会生成一条支持多个星期的阶段排期。'}}</view>
         <view class="weekday-grid">
           <view
             class="weekday-chip {{item.selected ? 'weekday-chip-active' : ''}}"
@@ -79,6 +79,7 @@
           </view>
         </view>
         <view class="item-subtitle schedule-hint">按每周排课量、开始日期、总时长和每月休息 {{restMonthlyLimit}} 次估算，算完后你仍可手动改。</view>
+        <view class="item-subtitle schedule-hint">如果后续月份节奏变化，请新建另一条排期，而不是把所有月份塞进同一条规则。</view>
       </view>
       <view class="form-item">
         <view class="form-label">排期备注</view>

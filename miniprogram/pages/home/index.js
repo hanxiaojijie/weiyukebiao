@@ -8,8 +8,7 @@ const {
 } = require("../../utils/learning");
 const { ensureLogin } = require("../../utils/auth");
 const { fetchAllDocs } = require("../../utils/database");
-const { countPlannedSessions, doesPlanOccurOnDate } = require("../../utils/schedule");
-const WEEKDAY_MAP = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+const { countPlannedSessions, doesPlanOccurOnDate, getPlanWeekdays } = require("../../utils/schedule");
 
 function pad(value) {
   return `${value}`.padStart(2, "0");
@@ -80,7 +79,7 @@ Page({
             courseName: true,
             startTime: true,
             endTime: true,
-            weekday: true,
+            weekdays: true,
             status: true,
             startDate: true,
             endDate: true,
@@ -112,7 +111,6 @@ Page({
 
       const now = new Date();
       const todayDateKey = getDateKey(now);
-      const weekday = WEEKDAY_MAP[now.getDay()];
       const weekStart = getWeekStart(now);
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
@@ -152,7 +150,8 @@ Page({
           .map((item) => [item.planId, item])
       );
       const todayPlans = plans
-        .filter((item) => item.weekday === weekday && doesPlanOccurOnDate(item, todayDateKey))
+        .filter((item) => getPlanWeekdays(item).length)
+        .filter((item) => doesPlanOccurOnDate(item, todayDateKey))
         .map((item) => {
           const checkin = todayCheckinMap.get(item._id);
 

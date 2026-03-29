@@ -26,6 +26,18 @@ function getWeekdayKey(date) {
   return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][day];
 }
 
+function getPlanWeekdays(plan = {}) {
+  if (Array.isArray(plan.weekdays) && plan.weekdays.length) {
+    return plan.weekdays.filter(Boolean);
+  }
+
+  if (plan.weekday) {
+    return [plan.weekday];
+  }
+
+  return [];
+}
+
 function minutesBetweenTimes(startTime, endTime) {
   if (!startTime || !endTime) {
     return 0;
@@ -69,7 +81,7 @@ function isPlanInDateRange(plan = {}, dateOrKey) {
 function doesPlanOccurOnDate(plan = {}, dateOrKey) {
   const date = typeof dateOrKey === "string" ? parseDateKey(dateOrKey) : dateOrKey;
   const dateKey = typeof dateOrKey === "string" ? dateOrKey : getDateKey(date);
-  return plan.weekday === getWeekdayKey(date) && isPlanInDateRange(plan, dateKey);
+  return getPlanWeekdays(plan).includes(getWeekdayKey(date)) && isPlanInDateRange(plan, dateKey);
 }
 
 function countPlannedSessions(planList = [], startDate, endDate) {
@@ -139,6 +151,7 @@ module.exports = {
   doesPlanOccurOnDate,
   getDateKey,
   getPlanStartDateKey,
+  getPlanWeekdays,
   getWeekdayKey,
   isPlanInDateRange,
   minutesBetweenTimes,

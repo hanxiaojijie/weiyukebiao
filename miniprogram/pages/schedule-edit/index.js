@@ -4,6 +4,7 @@ const {
   calculateEstimatedEndDate,
   getDateKey,
   getPlanStartDateKey,
+  getPlanWeekdays,
   minutesBetweenTimes,
 } = require("../../utils/schedule");
 
@@ -34,6 +35,17 @@ function getInitialForm() {
 
 function isTimeOverlap(startA, endA, startB, endB) {
   return startA < endB && endA > startB;
+}
+
+function getWeekdayLabelSummary(weekdays = []) {
+  return weekdayOptions
+    .filter((item) => weekdays.includes(item.key))
+    .map((item) => item.label)
+    .join("、");
+}
+
+function hasWeekdayOverlap(sourceWeekdays = [], targetWeekdays = []) {
+  return sourceWeekdays.some((weekday) => targetWeekdays.includes(weekday));
 }
 
 Page({
@@ -87,9 +99,7 @@ Page({
         startTime: startTime || "18:00",
         endTime: endTime ? (endTime === "24:00" ? "23:59" : endTime) : "19:00",
       },
-      selectedWeekdayLabel: weekdays.length
-        ? weekdayOptions.find((item) => item.key === weekday)?.label || "请选择上课星期"
-        : "请选择上课星期",
+      selectedWeekdayLabel: weekdays.length ? getWeekdayLabelSummary(weekdays) : "请选择上课星期",
     });
     this.syncWeekdayOptions(weekdays);
   },
@@ -229,12 +239,12 @@ Page({
         });
         return;
       }
-      const selectedWeekday = weekdayOptions.find((item) => item.key === data.weekday) || weekdayOptions[0];
+      const weekdays = getPlanWeekdays(data);
       const selectedCourse = this.data.courses.find((item) => item.id === data.courseId);
       this.setData({
         form: {
           courseId: data.courseId || "",
-          weekdays: data.weekday ? [data.weekday] : [],
+          weekdays,
           startDate: data.startDate || getDateKey(data.createdAt ? new Date(data.createdAt) : new Date()),
           endDate: data.endDate || "",
           startTime: data.startTime || "",
@@ -248,9 +258,9 @@ Page({
         },
         originalCourseId: data.courseId || "",
         selectedCourseName: data.courseName || "请选择一门已录入课程",
-        selectedWeekdayLabel: selectedWeekday.label,
+        selectedWeekdayLabel: weekdays.length ? getWeekdayLabelSummary(weekdays) : "请选择上课星期",
       });
-      this.syncWeekdayOptions(data.weekday ? [data.weekday] : []);
+      this.syncWeekdayOptions(weekdays);
     } catch (error) {
       console.error("读取排期详情失败", error);
       wx.showToast({
@@ -291,12 +301,7 @@ Page({
 
     this.setData({
       "form.weekdays": orderedWeekdays,
-      selectedWeekdayLabel: orderedWeekdays.length
-        ? weekdayOptions
-            .filter((item) => orderedWeekdays.includes(item.key))
-            .map((item) => item.label)
-            .join("、")
-        : "请选择上课星期",
+      selectedWeekdayLabel: orderedWeekdays.length ? getWeekdayLabelSummary(orderedWeekdays) : "请选择上课星期",
     });
     this.syncWeekdayOptions(orderedWeekdays);
   },
@@ -443,8 +448,9 @@ Page({
           return false;
         }
 
+        const existingWeekdays = getPlanWeekdays(item);
         return (
-          form.weekdays.includes(item.weekday) &&
+          hasWeekdayOverlap(form.weekdays, existingWeekdays) &&
           !(
             (item.endDate && item.endDate < form.startDate) ||
             (form.endDate && getPlanStartDateKey(item) && getPlanStartDateKey(item) > form.endDate)
@@ -454,18 +460,25 @@ Page({
       });
 
       if (conflictingPlan) {
+        const conflictingWeekdayLabel = getWeekdayLabelSummary(getPlanWeekdays(conflictingPlan)) || "该时段";
         wx.showToast({
-          title: `${conflictingPlan.weekdayLabel} ${conflictingPlan.startTime}-${conflictingPlan.endTime} 已有课程`,
+          title: `${conflictingWeekdayLabel} ${conflictingPlan.startTime}-${conflictingPlan.endTime} 已有课程`,
           icon: "none",
         });
         return;
       }
 
+      const weekdayLabels = weekdayOptions
+        .filter((item) => form.weekdays.includes(item.key))
+        .map((item) => item.label);
       const basePayload = {
         openid,
         courseId: form.courseId,
         courseName: selectedCourse ? selectedCourse.name : "未命名课程",
         colorClass: selectedCourse ? selectedCourse.colorClass : "course-color-sage",
+        weekdays: [...form.weekdays],
+        weekdayLabels,
+        weekdayLabel: weekdayLabels.join("、"),
         startDate: form.startDate,
         endDate: form.endDate,
         startTime: form.startTime.trim(),
@@ -480,29 +493,16 @@ Page({
       };
 
       if (this.data.mode === "edit" && this.data.planId) {
-        const weekdayKey = form.weekdays[0];
-        const selectedWeekday = weekdayOptions.find((item) => item.key === weekdayKey);
         await db.collection("user_course_plans").doc(this.data.planId).update({
-          data: {
-            ...basePayload,
-            weekday: weekdayKey,
-            weekdayLabel: selectedWeekday ? selectedWeekday.label : "周一",
-          },
+          data: basePayload,
         });
       } else {
-        await Promise.all(
-          form.weekdays.map((weekdayKey) => {
-            const selectedWeekday = weekdayOptions.find((item) => item.key === weekdayKey);
-            return db.collection("user_course_plans").add({
-              data: {
-                ...basePayload,
-                weekday: weekdayKey,
-                weekdayLabel: selectedWeekday ? selectedWeekday.label : "周一",
-                createdAt: new Date(),
-              },
-            });
-          })
-        );
+        await db.collection("user_course_plans").add({
+          data: {
+            ...basePayload,
+            createdAt: new Date(),
+          },
+        });
       }
 
       wx.showToast({

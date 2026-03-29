@@ -6,6 +6,7 @@ const {
   doesPlanOccurOnDate,
   getDateKey,
   getPlanStartDateKey,
+  getPlanWeekdays,
   getWeekdayKey,
   parseDateKey,
 } = require("../../utils/schedule");
@@ -77,10 +78,12 @@ function getStatusMeta(checkin) {
 function buildPlanSlotIndex(planList = []) {
   return planList.reduce((indexMap, plan) => {
     const slotKey = getSlotKeyByTime(plan.startTime);
-    const key = `${plan.weekday}|${slotKey}`;
-    const current = indexMap.get(key) || [];
-    current.push(plan);
-    indexMap.set(key, current);
+    getPlanWeekdays(plan).forEach((weekday) => {
+      const key = `${weekday}|${slotKey}`;
+      const current = indexMap.get(key) || [];
+      current.push(plan);
+      indexMap.set(key, current);
+    });
     return indexMap;
   }, new Map());
 }
@@ -186,7 +189,7 @@ function getScheduleForDate(planSlotIndex, checkinMap, date, slotKey) {
 
   return {
     planId: matchedPlan._id,
-    weekday: matchedPlan.weekday,
+    weekdays: getPlanWeekdays(matchedPlan),
     title: matchedPlan.courseName,
     time: `${matchedPlan.startTime}-${matchedPlan.endTime}`,
     startTime: matchedPlan.startTime,
@@ -380,8 +383,9 @@ Page({
           _id: true,
           courseId: true,
           courseName: true,
-          weekday: true,
+          weekdays: true,
           weekdayLabel: true,
+          weekdayLabels: true,
           startDate: true,
           endDate: true,
           startTime: true,
@@ -421,7 +425,7 @@ Page({
           id: item._id,
           courseId: item.courseId || "",
           courseName: item.courseName || "未命名课程",
-          weekdayLabel: item.weekdayLabel || "周一",
+          weekdayLabel: (item.weekdayLabels || []).join("、") || item.weekdayLabel || "未设置",
           startTime: item.startTime || "",
           endTime: item.endTime || "",
           note: item.note || "",
@@ -443,33 +447,18 @@ Page({
   },
 
   groupPlans(planList = []) {
-    const groupedMap = new Map();
-    planList.forEach((item) => {
-      const key = item.courseId || item.courseName;
-      const current = groupedMap.get(key) || {
+    return planList
+      .slice()
+      .sort((left, right) => getPlanStartDateKey(left).localeCompare(getPlanStartDateKey(right)))
+      .map((item) => ({
         id: item._id,
         courseName: item.courseName || "未命名课程",
         note: item.note || "",
-        weekdayLabels: [],
-        timeRanges: [],
         colorClass: item.colorClass || "course-color-sage",
-        startDate: getPlanStartDateKey(item),
-        endDate: item.endDate || "",
-      };
-      current.weekdayLabels.push(item.weekdayLabel || "周一");
-      current.timeRanges.push(`${item.startTime || ""}-${item.endTime || ""}`);
-      if (!current.note && item.note) {
-        current.note = item.note;
-      }
-      groupedMap.set(key, current);
-    });
-
-    return Array.from(groupedMap.values()).map((item) => ({
-      ...item,
-      weekdayLabel: [...new Set(item.weekdayLabels)].join("、"),
-      timeLabel: [...new Set(item.timeRanges)].join(" / "),
-      dateRangeLabel: item.endDate ? `${item.startDate} 至 ${item.endDate}` : `${item.startDate} 起`,
-    }));
+        weekdayLabel: (item.weekdayLabels || []).join("、") || item.weekdayLabel || "未设置",
+        timeLabel: `${item.startTime || ""}-${item.endTime || ""}`,
+        dateRangeLabel: item.endDate ? `${getPlanStartDateKey(item)} 至 ${item.endDate}` : `${getPlanStartDateKey(item)} 起`,
+      }));
   },
 
   syncVisibleCourses() {
