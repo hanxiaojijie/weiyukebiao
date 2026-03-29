@@ -1,0 +1,68 @@
+.btn-primary,
+.btn-secondary {
+  font-size: 26rpx;
+}
+
+.note-editor {
+  margin-top: 22rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid var(--divider-color, rgba(166, 77, 103, 0.08));
+}
+
+.leave-editor {
+  margin-top: 18rpx;
+}
+
+.section-title-inline {
+  font-size: 24rpx;
+}
+
+.note-textarea {
+  min-height: 168rpx;
+  margin-top: 12rpx;
+}
+
+.actual-minutes-input {
+  margin-top: 10rpx;
+}
+
+.session-note-meta {
+  margin-top: 10rpx;
+  text-align: right;
+  font-size: 20rpx;
+  color: var(--text-muted, #af8a96);
+}
+
+.note-save-btn {
+  margin-top: 12rpx;
+}
+
+.status-actions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+
+.btn-status {
+  flex: 1;
+  height: 64rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  background: var(--secondary-btn-bg, #fdecef);
+  color: var(--secondary-btn-text, #9c4961);
+}
+
+.btn-status-leave {
+  background: #fde9d9;
+  color: #a86a44;
+}
+
+.btn-status-rest {
+  background: #eceef3;
+  color: #677086;
+}
+
+.btn-status-missed {
+  background: #f8dde0;
+  color: #b45264;
+}

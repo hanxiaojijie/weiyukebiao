@@ -1,0 +1,96 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card">
+    <view class="page-kicker">未雨课表</view>
+    <view class="page-title">{{pageTitle}}</view>
+    <view class="page-desc">{{pageDesc}}</view>
+  </view>
+
+  <view class="section">
+    <view class="limit-banner">
+      当前已编排 {{activePlanCount}} / {{maxActiveCourses}} 门课程。可以给同一门课勾选多个星期，固定晚间时段会更稳定。
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="form-card">
+      <view class="form-item">
+        <view class="form-label">选择课程</view>
+        <picker range="{{courses}}" range-key="name" bindchange="onCourseChange">
+          <view class="form-input">{{selectedCourseName}}</view>
+        </picker>
+      </view>
+      <view class="form-item">
+        <view class="form-label">上课星期</view>
+        <view class="item-subtitle" style="margin-top: 0; margin-bottom: 14rpx;">{{mode === 'edit' ? '编辑时修改这条排期对应的星期。' : '可多选，保存后会自动生成多条排期。'}}</view>
+        <view class="weekday-grid">
+          <view
+            class="weekday-chip {{item.selected ? 'weekday-chip-active' : ''}}"
+            wx:for="{{weekdayOptions}}"
+            wx:key="key"
+            data-key="{{item.key}}"
+            bindtap="onToggleWeekday"
+          >
+            {{item.label}}
+          </view>
+        </view>
+        <view class="weekday-summary">{{selectedWeekdayLabel}}</view>
+      </view>
+      <view class="form-item">
+        <view class="time-grid">
+          <view class="time-col">
+            <view class="form-label">开始日期</view>
+            <picker mode="date" value="{{form.startDate}}" bindchange="onDateChange" data-field="startDate">
+              <view class="form-input">{{form.startDate || '请选择开始日期'}}</view>
+            </picker>
+          </view>
+          <view class="time-col">
+            <view class="form-label">课程总时长</view>
+            <input class="form-input" type="digit" placeholder="默认带入课程总时长" value="{{form.totalHours}}" data-field="totalHours" bindinput="onInputChange" />
+          </view>
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="time-grid">
+          <view class="time-col">
+            <view class="form-label">开始时间</view>
+            <picker mode="time" value="{{form.startTime}}" bindchange="onInputChange" data-field="startTime">
+              <view class="form-input">{{form.startTime || '请选择开始时间'}}</view>
+            </picker>
+          </view>
+          <view class="time-col">
+            <view class="form-label">结束时间</view>
+            <picker mode="time" value="{{form.endTime}}" bindchange="onInputChange" data-field="endTime">
+              <view class="form-input">{{form.endTime || '请选择结束时间'}}</view>
+            </picker>
+          </view>
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="time-grid schedule-end-grid">
+          <view class="time-col">
+            <view class="form-label">课程结束日期</view>
+            <picker mode="date" value="{{form.endDate}}" bindchange="onDateChange" data-field="endDate">
+              <view class="form-input">{{form.endDate || '先点击右侧自动计算'}}</view>
+            </picker>
+          </view>
+          <view class="time-col">
+            <view class="form-label">自动计算</view>
+            <button class="btn-secondary calculate-btn" bindtap="onCalculateEndDate">计算结束日期</button>
+          </view>
+        </view>
+        <view class="item-subtitle schedule-hint">按每周排课量、开始日期、总时长和每月休息 {{restMonthlyLimit}} 次估算，算完后你仍可手动改。</view>
+      </view>
+      <view class="form-item">
+        <view class="form-label">排期备注</view>
+        <textarea class="form-textarea" placeholder="记录为什么安排在这个时间、请假规则、补课方式" value="{{form.note}}" data-field="note" bindinput="onInputChange"></textarea>
+      </view>
+      <view class="cta-row">
+        <button class="btn-primary" bindtap="onSavePlan" loading="{{saving}}">{{saveButtonText}}</button>
+        <button class="btn-secondary" bindtap="goBack">返回课表</button>
+      </view>
+      <view class="cta-row" wx:if="{{mode === 'edit'}}">
+        <button class="btn-secondary btn-danger-light" bindtap="onDisablePlan" loading="{{saving}}">停用这条排期</button>
+      </view>
+    </view>
+  </view>
+</view>

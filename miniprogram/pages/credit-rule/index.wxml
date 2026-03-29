@@ -1,0 +1,40 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card">
+    <view class="page-kicker">未雨课表</view>
+    <view class="page-title">学习规则</view>
+    <view class="page-desc">设置学分和休息次数。</view>
+  </view>
+
+  <view class="section">
+    <view class="form-card">
+      <view class="form-item">
+        <view class="form-label">完成一节课</view>
+        <input class="form-input" value="{{form.completionCredits}}" data-field="completionCredits" bindinput="onInputChange" placeholder="例如：8" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">深度学习阈值（分钟）</view>
+        <input class="form-input" value="{{form.deepStudyThreshold}}" data-field="deepStudyThreshold" bindinput="onInputChange" placeholder="例如：90" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">达到阈值额外奖励</view>
+        <input class="form-input" value="{{form.deepStudyBonus}}" data-field="deepStudyBonus" bindinput="onInputChange" placeholder="例如：5" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">旷课扣减学分</view>
+        <input class="form-input" type="number" value="{{form.missedPenalty}}" data-field="missedPenalty" bindinput="onInputChange" placeholder="例如：-4" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">每月休息次数</view>
+        <input class="form-input" type="number" value="{{form.restMonthlyLimit}}" data-field="restMonthlyLimit" bindinput="onInputChange" placeholder="例如：4" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">全局手动校正</view>
+        <input class="form-input" value="{{form.manualAdjustment}}" data-field="manualAdjustment" bindinput="onInputChange" placeholder="例如：0" />
+        <view class="item-subtitle">请假默认不计分，休息会占用每月次数，旷课按上面的扣分规则处理。</view>
+      </view>
+      <view class="cta-row">
+        <button class="btn-primary" bindtap="onSaveRule" loading="{{saving}}">保存规则</button>
+      </view>
+    </view>
+  </view>
+</view>

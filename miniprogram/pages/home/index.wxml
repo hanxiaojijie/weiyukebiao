@@ -1,0 +1,110 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card">
+    <view class="page-kicker">未雨课表</view>
+    <view class="page-title">今日总览</view>
+    <view class="page-desc">{{nextPlan ? ('下一节：' + nextPlan.courseName + ' · ' + nextPlan.time) : '把今天该做的事，收进一眼能看懂的总览里。'}}</view>
+    <view class="metric-row">
+      <view class="metric-pill">
+        <view class="metric-label">当前学分</view>
+        <view class="metric-value">{{totalCredits}}</view>
+      </view>
+      <view class="metric-pill">
+        <view class="metric-label">连续学习</view>
+        <view class="metric-value">{{streakDays}} 天</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">主奖励进度</view>
+      <view class="section-meta" bindtap="goReward">调整目标</view>
+    </view>
+    <view class="reward-card">
+      <view class="reward-top">
+        <view>
+          <view class="item-title">{{reward.title}}</view>
+          <view class="item-subtitle">目标 {{reward.targetCredits}} 学分，按累计学分持续推进。</view>
+        </view>
+        <view class="reward-percent">
+          <view class="reward-percent-value">{{progressPercent}}%</view>
+          <view class="reward-percent-label">已解锁</view>
+        </view>
+      </view>
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
+      </view>
+      <view class="reward-metrics">
+        <view class="reward-metric">
+          <view class="reward-metric-value">{{reward.currentCredits}}</view>
+          <view class="reward-metric-label">当前学分</view>
+        </view>
+        <view class="reward-metric">
+          <view class="reward-metric-value">{{reward.targetCredits - reward.currentCredits}}</view>
+          <view class="reward-metric-label">还差学分</view>
+        </view>
+        <view class="reward-metric">
+          <view class="reward-metric-value">{{reward.completedCount}}</view>
+          <view class="reward-metric-label">完成课次</view>
+        </view>
+      </view>
+      <view class="item-meta">本月已新增 {{reward.monthGain}} 学分。</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">本周进度</view>
+      <view class="section-meta">{{weekSummary.total}} 节安排</view>
+    </view>
+    <view class="grid-4">
+      <view class="mini-stat">
+        <view class="mini-stat-value">{{weekSummary.done}}</view>
+        <view class="mini-stat-label">已完成</view>
+      </view>
+      <view class="mini-stat">
+        <view class="mini-stat-value">{{weekSummary.pending}}</view>
+        <view class="mini-stat-label">待开始 / 进行中</view>
+      </view>
+      <view class="mini-stat">
+        <view class="mini-stat-value">{{weekSummary.special}}</view>
+        <view class="mini-stat-label">请假 / 休息 / 旷课</view>
+      </view>
+      <view class="mini-stat">
+        <view class="mini-stat-value">{{weekSummary.total}}</view>
+        <view class="mini-stat-label">本周总课次</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">今日学习安排</view>
+      <view class="section-meta">共 {{todayPlans.length}} 项</view>
+    </view>
+    <view class="list-card">
+      <view class="empty-hint" wx:if="{{!todayPlans.length}}">今天还没有安排课程，可以先去课程页补一条学习计划。</view>
+      <view class="list-item" wx:for="{{todayPlans}}" wx:key="id">
+        <view class="row-between">
+          <view class="item-title">{{item.courseName}}</view>
+          <view class="tag {{item.status === '旷课' ? 'tag-danger' : item.status === '休息' ? 'tag-muted' : item.status === '请假' || item.status === '已完成' ? 'tag-warm' : ''}}">{{item.status}}</view>
+        </view>
+        <view class="item-subtitle">{{item.time}}</view>
+      </view>
+      <view class="cta-row">
+        <button class="btn-primary" bindtap="goCheckin">去打卡</button>
+        <button class="btn-secondary" bindtap="goStats">看统计</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">最近学习记录</view>
+      <view class="section-meta" bindtap="goStats">查看统计</view>
+    </view>
+    <view class="panel-card stack">
+      <view class="item-subtitle" wx:for="{{recentNotes}}" wx:key="*this">- {{item}}</view>
+    </view>
+  </view>
+</view>

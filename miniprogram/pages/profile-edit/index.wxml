@@ -1,0 +1,28 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card">
+    <view class="page-kicker">未雨课表</view>
+    <view class="page-title">个人信息</view>
+    <view class="page-desc">修改头像、昵称和简介。</view>
+  </view>
+
+  <view class="section">
+    <view class="form-card">
+      <view class="form-item">
+        <view class="profile-inline">
+          <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+            <image wx:if="{{form.avatarUrl}}" class="avatar-image" src="{{form.avatarUrl}}" mode="aspectFill"></image>
+            <view wx:else class="avatar-fallback">{{displayInitial}}</view>
+          </button>
+          <input class="profile-inline-input" maxlength="20" placeholder="请输入昵称" value="{{form.nickname}}" bindinput="onNicknameInput" />
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="form-label">个人简介</view>
+        <textarea class="form-textarea" maxlength="60" placeholder="例如：想用一年时间稳稳补齐硬技能" value="{{form.intro}}" bindinput="onIntroInput"></textarea>
+      </view>
+      <view class="cta-row">
+        <button class="btn-primary" bindtap="onSave" loading="{{saving}}">保存信息</button>
+      </view>
+    </view>
+  </view>
+</view>

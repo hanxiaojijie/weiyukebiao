@@ -1,0 +1,51 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card">
+    <view class="page-kicker">未雨课表</view>
+    <view class="page-title">{{pageTitle}}</view>
+    <view class="page-desc">{{pageDesc}}</view>
+  </view>
+
+  <view class="section">
+    <view class="form-card">
+      <view class="form-item">
+        <view class="form-label">课程名称</view>
+        <input class="form-input" placeholder="例如：机器人算法" value="{{form.name}}" data-field="name" bindinput="onInputChange" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">课程类别</view>
+        <picker range="{{courseCategories}}" value="{{selectedCategoryIndex}}" bindchange="onCategoryChange">
+          <view class="form-input">{{form.category || '请选择课程类别'}}</view>
+        </picker>
+        <view class="item-subtitle">课程颜色会根据课程类别自动分配，避免手动选择。</view>
+      </view>
+      <view class="form-item">
+        <view class="form-label">课程总用时</view>
+        <input class="form-input" type="digit" placeholder="例如：40，便于排期时预估学习周期" value="{{form.totalDuration}}" data-field="totalDuration" bindinput="onInputChange" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">课程简介</view>
+        <textarea class="form-textarea" placeholder="描述这门课适合谁、学什么、怎么学" value="{{form.description}}" data-field="description" bindinput="onInputChange"></textarea>
+      </view>
+      <view class="form-item">
+        <view class="form-label">课程链接</view>
+        <input class="form-input" placeholder="例如：课程主页 / 视频链接 / 网盘链接" value="{{form.link}}" data-field="link" bindinput="onInputChange" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">资料链接</view>
+        <textarea class="form-textarea" placeholder="例如：PDF、PPT、视频、书籍、IDE 下载地址等，一行一条" value="{{form.materials}}" data-field="materials" bindinput="onInputChange"></textarea>
+      </view>
+      <view class="form-item">
+        <view class="form-label">标签</view>
+        <input class="form-input" placeholder="例如：路径规划 / 雅思 / 嵌入式" value="{{form.tags}}" data-field="tags" bindinput="onInputChange" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">录入说明</view>
+        <textarea class="form-textarea" placeholder="补充适合的学习顺序、先修要求、难点提醒、推荐排期方式" value="{{form.notes}}" data-field="notes" bindinput="onInputChange"></textarea>
+      </view>
+      <view class="cta-row">
+        <button class="btn-primary" bindtap="onSaveCourse" loading="{{saving}}">{{saveButtonText}}</button>
+        <button class="btn-secondary" bindtap="onCopyCourseLink">复制课程链接</button>
+      </view>
+    </view>
+  </view>
+</view>

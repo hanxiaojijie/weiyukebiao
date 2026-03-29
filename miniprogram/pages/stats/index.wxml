@@ -1,0 +1,61 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card">
+    <view class="page-kicker">未雨课表</view>
+    <view class="page-title">把努力变成看得见的反馈。</view>
+    <view class="page-desc">学习时长、出勤率、学分变化和奖励进度，都集中在这里查看。</view>
+  </view>
+
+  <view class="section">
+    <view class="grid-2">
+      <view class="mini-stat">
+        <view class="mini-stat-value">{{stats.monthHours}} h</view>
+        <view class="mini-stat-label">本月学习时长</view>
+      </view>
+      <view class="mini-stat">
+        <view class="mini-stat-value">{{stats.attendanceRate}}%</view>
+        <view class="mini-stat-label">本月出勤率</view>
+      </view>
+      <view class="mini-stat">
+        <view class="mini-stat-value">{{stats.totalCredits}}</view>
+        <view class="mini-stat-label">累计学分</view>
+      </view>
+      <view class="mini-stat">
+        <view class="mini-stat-value">{{stats.rewardProgress}}%</view>
+        <view class="mini-stat-label">奖励进度</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">本月状态分布</view>
+      <view class="section-meta">请假计出勤，休息不计分，旷课扣分</view>
+    </view>
+    <view class="list-card">
+      <view class="list-item">
+        <view class="row-between">
+          <view class="item-title">已完成</view>
+          <view class="tag tag-warm">{{stats.doneCount}} 次</view>
+        </view>
+      </view>
+      <view class="list-item">
+        <view class="row-between">
+          <view class="item-title">请假</view>
+          <view class="tag tag-warm">{{stats.leaveCount}} 次</view>
+        </view>
+      </view>
+      <view class="list-item">
+        <view class="row-between">
+          <view class="item-title">休息</view>
+          <view class="tag tag-muted">{{stats.restCount}} 次</view>
+        </view>
+      </view>
+      <view class="list-item">
+        <view class="row-between">
+          <view class="item-title">旷课</view>
+          <view class="tag tag-danger">{{stats.missedCount}} 次</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

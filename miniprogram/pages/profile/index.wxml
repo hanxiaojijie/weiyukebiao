@@ -1,0 +1,38 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card">
+    <view class="page-kicker">未雨课表</view>
+    <view class="profile-head" bindtap="goPage" data-path="/pages/profile-edit/index">
+      <view class="profile-avatar" wx:if="{{profile.avatarUrl}}">
+        <image class="profile-avatar-image" src="{{profile.avatarUrl}}" mode="aspectFill"></image>
+      </view>
+      <view class="profile-avatar profile-avatar-fallback" wx:else>{{profile.nickname.slice(0, 1)}}</view>
+      <view class="profile-copy">
+        <view class="page-title">{{profile.nickname}}</view>
+        <view class="page-desc">{{profile.intro}}</view>
+      </view>
+    </view>
+    <view class="metric-row">
+      <view class="metric-pill">
+        <view class="metric-label">本周累计</view>
+        <view class="metric-value">{{profileStats.weekHours}} h</view>
+      </view>
+      <view class="metric-pill">
+        <view class="metric-label">本月出勤率</view>
+        <view class="metric-value">{{profileStats.monthAttendance}}%</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">个人设置</view>
+      <view class="section-meta"></view>
+    </view>
+    <view class="list-card">
+      <view class="list-item" wx:for="{{panels}}" wx:key="title" bindtap="goPage" data-path="{{item.path}}">
+        <view class="item-title">{{item.title}}</view>
+        <view class="item-subtitle">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+</view>

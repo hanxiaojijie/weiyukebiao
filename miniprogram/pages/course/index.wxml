@@ -1,0 +1,133 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card">
+    <view class="page-kicker">未雨课表</view>
+    <view class="page-title">个人课表</view>
+    <view class="page-desc">查看和管理你的学习安排。</view>
+    <view class="cta-row">
+      <button class="btn-primary" bindtap="goSchedule">编排课表</button>
+      <button class="btn-secondary" bindtap="onJumpToday">回到今天</button>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">时段课表</view>
+      <view class="section-meta" bindtap="onJumpToday">{{currentWeekLabel || '本周'}} · {{activePlanCount}} / {{maxActiveCourses}} 门进行中</view>
+    </view>
+    <view class="limit-banner">当前最多同时维持 {{maxActiveCourses}} 门课程。</view>
+    <view class="panel-card timetable-shell" style="margin-top: 14rpx;">
+      <view class="week-layout">
+        <view class="time-axis">
+          <view class="time-axis-head">时间</view>
+          <view class="time-axis-slot {{item.compact ? 'time-axis-slot-compact' : ''}}" wx:for="{{timeRows}}" wx:key="key">
+            <view class="time-label">{{item.label}}</view>
+            <view class="time-short">{{item.short}}</view>
+          </view>
+        </view>
+
+        <swiper
+          class="timetable-swiper"
+          current="{{currentWeekIndex}}"
+          previous-margin="0px"
+          next-margin="0px"
+          bindchange="onWeekChange"
+        >
+          <swiper-item class="timetable-week-page" wx:for="{{weekPages}}" wx:key="id">
+            <view class="day-columns">
+              <view class="day-column {{day.isPast ? 'day-column-past' : ''}}" wx:for="{{item.columns}}" wx:for-item="day" wx:key="dateKey">
+                <view class="day-column-head {{day.isToday ? 'day-column-head-today' : ''}} {{day.isPast ? 'day-column-head-past' : ''}}">
+                  <view>{{day.weekdayLabel}}</view>
+                  <view class="day-date">{{day.dateLabel}}</view>
+                </view>
+                <view class="day-track {{day.isPast ? 'day-track-past' : ''}}">
+                  <view
+                    class="day-slot {{slot.compact ? 'day-slot-compact' : ''}} {{day.isPast ? 'day-slot-past' : ''}}"
+                    wx:for="{{day.slots}}"
+                    wx:for-item="slot"
+                    wx:key="key"
+                    bindtap="onTapSlot"
+                    data-plan-id="{{slot.schedule.planId}}"
+                    data-weekday="{{slot.schedule.weekday || day.weekdayKey}}"
+                    data-start-date="{{day.dateKey}}"
+                    data-start-time="{{slot.schedule.startTime || slot.defaultStartTime}}"
+                    data-end-time="{{slot.schedule.endTime || slot.defaultEndTime}}"
+                  >
+                    <view wx:if="{{slot.schedule}}" class="grid-course {{slot.schedule.colorClass}} {{slot.compact ? 'grid-course-compact' : ''}} {{day.isPast ? 'grid-course-past' : ''}}">
+                      <view class="grid-course-status {{slot.schedule.statusClass}}" wx:if="{{slot.schedule.statusLabel}}">
+                        <text>{{slot.schedule.statusLabel}}</text>
+                      </view>
+                      <view class="grid-course-status course-status-missed" wx:if="{{slot.schedule.conflictCount > 0}}">
+                        <text>+{{slot.schedule.conflictCount}} 冲突</text>
+                      </view>
+                      <view class="grid-course-title">{{slot.schedule.title}}</view>
+                      <view class="grid-course-time">{{slot.schedule.time}}</view>
+                      <view class="grid-course-credit" wx:if="{{slot.schedule.earnedCredits}}">{{slot.schedule.earnedCredits > 0 ? ('+' + slot.schedule.earnedCredits) : slot.schedule.earnedCredits}} 学分</view>
+                    </view>
+                    <view wx:else class="grid-empty">{{slot.compact ? '上班 / 空闲' : ''}}</view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </swiper-item>
+        </swiper>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">共享课程库</view>
+      <view class="section-meta">{{courses.length}} 门课程</view>
+    </view>
+    <view class="list-card">
+      <view class="row-between library-toolbar">
+        <view class="item-subtitle library-tip">共 {{courses.length}} 门课程</view>
+        <button class="btn-secondary btn-inline" bindtap="goCreate">录入课程</button>
+      </view>
+      <view wx:if="{{loadingCourses}}" class="empty-hint">课程加载中...</view>
+      <view wx:elif="{{!courses.length}}" class="empty-hint">还没有共享课程，先录入第一门课程。</view>
+      <view class="course-card-grid">
+        <view class="course-card {{item.colorClass}}" wx:for="{{visibleCourses}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+          <view class="row-between">
+            <view class="stack course-card-copy">
+              <view class="item-title">{{item.name}}</view>
+              <view class="item-subtitle">{{item.category}} · {{item.totalDuration}} 小时</view>
+            </view>
+            <view class="course-color-chip {{item.colorClass}}"></view>
+          </view>
+          <view class="row-between" style="margin-top: 12rpx;">
+            <view></view>
+            <view class="section-meta">详情</view>
+          </view>
+        </view>
+      </view>
+      <view class="cta-row" wx:if="{{courses.length > 10}}">
+        <button class="btn-secondary" bindtap="onToggleMoreCourses">{{showAllCourses ? '收起课程' : '查看更多'}}</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">已排课程</view>
+      <view class="section-meta">{{plans.length}} 条安排</view>
+    </view>
+    <view class="list-card">
+      <view class="empty-hint" wx:if="{{!groupedPlans.length}}">还没有已排课程，可以先补一条固定学习安排。</view>
+      <view class="plan-card-grid">
+        <view class="plan-card {{item.colorClass}}" wx:for="{{groupedPlans}}" wx:key="id">
+          <view class="row-between">
+            <view class="item-title">{{item.courseName}}</view>
+            <view class="tag plan-weekday-tag">{{item.weekdayLabel}}</view>
+          </view>
+          <view class="item-subtitle">{{item.timeLabel}}</view>
+          <view class="item-subtitle">{{item.dateRangeLabel}}</view>
+          <view class="item-meta" wx:if="{{item.note}}">{{item.note}}</view>
+          <view class="cta-row">
+            <button class="btn-secondary" bindtap="goEditPlan" data-id="{{item.id}}">编辑排期</button>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

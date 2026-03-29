@@ -1,0 +1,11 @@
+.course-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 14rpx;
+}
+
+.material-title {
+  flex: 1;
+  padding-right: 12rpx;
+}

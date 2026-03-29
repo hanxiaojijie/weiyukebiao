@@ -1,0 +1,106 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card" wx:if="{{course}}">
+    <view class="page-kicker">未雨课表</view>
+    <view class="page-title">{{course.name}}</view>
+    <view class="page-desc">{{course.description}}</view>
+    <view class="cta-row">
+      <button class="btn-primary" bindtap="goSchedule">添加我的计划</button>
+      <button class="btn-secondary" bindtap="goEditCourse">编辑课程</button>
+    </view>
+  </view>
+
+  <view class="panel-card" wx:if="{{loading}}">
+    <view class="empty-hint">课程详情加载中...</view>
+  </view>
+
+  <block wx:elif="{{course}}">
+    <view class="section">
+      <view class="section-head">
+        <view class="section-title">课程概览</view>
+        <view class="section-meta">{{course.colorName}}</view>
+      </view>
+      <view class="grid-2">
+        <view class="mini-stat">
+          <view class="mini-stat-value">{{course.category}}</view>
+          <view class="mini-stat-label">课程类别</view>
+        </view>
+        <view class="mini-stat">
+          <view class="mini-stat-value">{{course.totalDuration}}</view>
+          <view class="mini-stat-label">课程总用时</view>
+        </view>
+        <view class="mini-stat">
+          <view class="mini-stat-value">{{metrics.activePlans}}</view>
+          <view class="mini-stat-label">我的排期</view>
+        </view>
+        <view class="mini-stat">
+          <view class="mini-stat-value">{{metrics.finishedCount}}</view>
+          <view class="mini-stat-label">已完成次数</view>
+        </view>
+      </view>
+      <view class="list-card" style="margin-top: 16rpx;">
+        <view class="list-item">
+          <view class="row-between">
+            <view class="item-title">累计学习时长</view>
+            <view class="tag tag-warm">{{metrics.totalDurationText}}</view>
+          </view>
+        </view>
+        <view class="list-item">
+          <view class="row-between">
+            <view class="item-title">累计学分</view>
+            <view class="tag {{metrics.totalCredits < 0 ? 'tag-danger' : 'tag-warm'}}">{{metrics.totalCredits}}</view>
+          </view>
+        </view>
+        <view class="list-item" wx:if="{{course.tags.length}}">
+          <view class="item-title">课程标签</view>
+          <view class="course-tags">
+            <text class="tag" wx:for="{{course.tags}}" wx:key="*this">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view class="section-title">课程链接</view>
+        <view class="section-meta">可一键复制</view>
+      </view>
+      <view class="list-card">
+        <view class="list-item">
+          <view class="item-subtitle">{{course.link || '暂未填写课程链接'}}</view>
+          <view class="cta-row" wx:if="{{course.link}}">
+            <button class="btn-secondary" bindtap="onCopyCourseLink">复制课程链接</button>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view class="section-title">资料管理</view>
+        <view class="section-meta">{{materials.length}} 条</view>
+      </view>
+      <view class="list-card">
+        <view class="empty-hint" wx:if="{{!materials.length}}">这门课还没有补充资料。</view>
+        <view class="list-item" wx:for="{{materials}}" wx:key="id">
+          <view class="row-between">
+            <view class="item-title material-title">{{item.title}}</view>
+            <view class="tag">{{item.type}}</view>
+          </view>
+          <view class="cta-row">
+            <button class="btn-secondary" bindtap="onCopyMaterial" data-content="{{item.url || item.title}}">复制内容</button>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section" wx:if="{{course.notes}}">
+      <view class="section-head">
+        <view class="section-title">录入说明</view>
+        <view class="section-meta">排期和选课参考</view>
+      </view>
+      <view class="panel-card">
+        <view class="item-subtitle">{{course.notes}}</view>
+      </view>
+    </view>
+  </block>
+</view>

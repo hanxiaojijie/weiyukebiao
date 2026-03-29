@@ -1,0 +1,3 @@
+.progress-track {
+  margin-top: 24rpx;
+}

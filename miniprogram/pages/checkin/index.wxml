@@ -1,0 +1,101 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card">
+    <view class="page-kicker">未雨课表</view>
+    <view class="page-title">今日打卡</view>
+    <view class="page-desc">一节课只走一个自然流程：上课打卡，下课打卡，最后补学习记录。</view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">当前课程</view>
+      <view class="section-meta">{{activeSession ? activeSession.stage : '暂无安排'}}</view>
+    </view>
+    <view class="session-card" wx:if="{{activeSession}}">
+      <view class="item-title">{{activeSession.course}}</view>
+      <view class="item-subtitle">{{activeSession.time}}</view>
+      <view class="session-stage">{{activeSession.stage}}</view>
+      <view class="item-meta">{{activeSession.note}}</view>
+      <view class="item-subtitle" wx:if="{{activeSession.earnedCredits > 0}}">本次学分 +{{activeSession.earnedCredits}} {{activeSession.creditHint ? ('· ' + activeSession.creditHint) : ''}}</view>
+      <view class="item-subtitle" wx:elif="{{activeSession.earnedCredits < 0}}">本次学分 {{activeSession.earnedCredits}}</view>
+
+      <view class="leave-editor" wx:if="{{activeSession.stage === '待开始'}}">
+        <view class="form-label">请假原因</view>
+        <input class="form-input" placeholder="只有点“请假”时才必填" value="{{leaveReason}}" bindinput="onLeaveReasonInput" />
+      </view>
+
+      <view class="status-actions" wx:if="{{activeSession.stage === '待开始'}}">
+        <button class="btn-status btn-status-leave" bindtap="onMarkSessionStatus" data-status="leave" loading="{{actionLoading}}">请假</button>
+        <button class="btn-status btn-status-rest" bindtap="onMarkSessionStatus" data-status="rest" loading="{{actionLoading}}">休息</button>
+        <button class="btn-status btn-status-missed" bindtap="onMarkSessionStatus" data-status="missed" loading="{{actionLoading}}">旷课</button>
+      </view>
+
+      <view class="note-editor" wx:if="{{activeSession.stage === '进行中' || activeSession.stage === '已完成'}}">
+        <view class="section-title section-title-inline">学习记录</view>
+        <view class="form-label" style="margin-top: 16rpx;">实际学习时长（分钟）</view>
+        <input
+          class="form-input actual-minutes-input"
+          type="number"
+          placeholder="根据真实学习时长填写"
+          value="{{actualMinutesInput}}"
+          bindinput="onActualMinutesInput"
+        />
+        <textarea
+          class="form-textarea note-textarea"
+          placeholder="这节课学了什么？卡在了哪里？下一步准备做什么？"
+          maxlength="200"
+          value="{{studyNote}}"
+          bindinput="onStudyNoteInput"
+        />
+        <view class="session-note-meta">{{studyNote.length}} / 200</view>
+      </view>
+
+      <view class="session-actions" wx:if="{{activeSession.stage === '待开始'}}">
+        <button class="btn-primary" bindtap="onStartSession" loading="{{actionLoading}}">上课打卡</button>
+      </view>
+      <view class="session-actions" wx:elif="{{activeSession.stage === '进行中'}}">
+        <button class="btn-primary" bindtap="onFinishSession" loading="{{actionLoading}}">下课打卡</button>
+      </view>
+      <view class="session-actions" wx:elif="{{activeSession.stage === '已完成'}}">
+        <button class="btn-secondary" bindtap="onSaveStudyNote" loading="{{noteSaving}}">保存记录</button>
+      </view>
+    </view>
+    <view class="panel-card" wx:else>
+      <view class="empty-hint">今天还没有排到课程，可以先去课程页补一条排期。</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">今日课程列表</view>
+      <view class="section-meta">{{pendingList.length}} 项</view>
+    </view>
+    <view class="list-card">
+      <view class="empty-hint" wx:if="{{loadingPlans}}">今日课程加载中...</view>
+      <view class="empty-hint" wx:elif="{{!pendingList.length}}">今天没有已编排的课程。</view>
+      <view class="list-item" wx:for="{{pendingList}}" wx:key="planId" bindtap="onSelectSession" data-plan-id="{{item.planId}}">
+        <view class="row-between">
+          <view class="item-title">{{item.course}}</view>
+          <view class="tag {{item.stage === '已旷课' ? 'tag-danger' : item.stage === '已休息' ? 'tag-muted' : item.stage === '已请假' ? 'tag-warm' : ''}}">{{item.stage}}</view>
+        </view>
+        <view class="item-subtitle">{{item.time}} · 计划 {{item.minutes}} 分钟{{item.actualMinutes && item.stage === '已完成' ? (' · 实际 ' + item.actualMinutes + ' 分钟') : ''}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">最近记录</view>
+      <view class="section-meta" bindtap="goRule">学习规则</view>
+    </view>
+    <view class="panel-card stack">
+      <view class="empty-hint" wx:if="{{!recentList.length}}">还没有打卡记录。</view>
+      <view class="list-item" wx:for="{{recentList}}" wx:key="id">
+        <view class="row-between">
+          <view class="item-title">{{item.course}}</view>
+          <view class="tag {{item.score === '旷课' ? 'tag-danger' : item.score === '休息' ? 'tag-muted' : item.score === '请假' ? 'tag-warm' : item.score === '已完成' ? 'tag-warm' : ''}}">{{item.score}}</view>
+        </view>
+        <view class="item-subtitle">{{item.note}}</view>
+      </view>
+    </view>
+  </view>
+</view>

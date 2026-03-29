@@ -1,0 +1,59 @@
+.weekday-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10rpx;
+}
+
+.weekday-chip {
+  height: 72rpx;
+  border-radius: 20rpx;
+  background: #eef0f4;
+  color: #7a8292;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 500;
+  border: 1rpx solid transparent;
+}
+
+.weekday-chip-active {
+  background: linear-gradient(135deg, var(--accent-mid, #c85f7f) 0%, var(--accent-strong, #a64d67) 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 10rpx 22rpx rgba(0, 0, 0, 0.12);
+}
+
+.weekday-summary {
+  margin-top: 14rpx;
+  font-size: 22rpx;
+  color: var(--text-muted, #af8a96);
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+}
+
+.time-col {
+  min-width: 0;
+}
+
+.schedule-end-grid {
+  align-items: end;
+}
+
+.calculate-btn {
+  width: 100%;
+  min-width: 0;
+}
+
+.schedule-hint {
+  margin-top: 12rpx;
+}
+
+.btn-danger-light {
+  color: #b45264;
+  background: #f8dde0;
+}

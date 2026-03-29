@@ -1,0 +1,19 @@
+<view class="page-shell theme-{{themeKey}}">
+  <view class="hero-card">
+    <view class="page-kicker">未雨课表</view>
+    <view class="page-title">界面配色</view>
+    <view class="page-desc">选择你更喜欢的一套颜色。</view>
+  </view>
+
+  <view class="section">
+    <view class="panel-card theme-picker">
+      <view class="theme-grid">
+        <view class="theme-swatch" wx:for="{{themes}}" wx:key="key" bindtap="onSelectTheme" data-key="{{item.key}}">
+          <view class="theme-preview theme-{{item.key}}"></view>
+          <view class="theme-swatch-name">{{item.name}}</view>
+          <view class="theme-check theme-check-floating" wx:if="{{themeKey === item.key}}">✓</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

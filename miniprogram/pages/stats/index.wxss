@@ -1,0 +1,3 @@
+.mini-stat {
+  min-height: 164rpx;
+}

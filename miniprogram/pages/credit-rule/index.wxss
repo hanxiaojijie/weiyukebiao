@@ -1,0 +1,4 @@
+.tag-warm {
+  min-width: 100rpx;
+  justify-content: center;
+}

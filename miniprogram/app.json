@@ -1,0 +1,50 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/course/index",
+    "pages/checkin/index",
+    "pages/profile/index",
+    "pages/course-detail/index",
+    "pages/course-edit/index",
+    "pages/schedule-edit/index",
+    "pages/theme-settings/index",
+    "pages/reward-edit/index",
+    "pages/credit-rule/index",
+    "pages/stats/index",
+    "pages/profile-edit/index"
+  ],
+  "window": {
+    "backgroundColor": "#FFF3F5",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFF3F5",
+    "navigationBarTitleText": "未雨课表",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#A7868E",
+    "selectedColor": "#A64D67",
+    "backgroundColor": "#FFF9FA",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/course/index",
+        "text": "课程"
+      },
+      {
+        "pagePath": "pages/checkin/index",
+        "text": "打卡"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}
