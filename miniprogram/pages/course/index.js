@@ -447,18 +447,35 @@ Page({
   },
 
   groupPlans(planList = []) {
-    return planList
+    const groupedMap = new Map();
+
+    planList
       .slice()
       .sort((left, right) => getPlanStartDateKey(left).localeCompare(getPlanStartDateKey(right)))
-      .map((item) => ({
-        id: item._id,
-        courseName: item.courseName || "未命名课程",
-        note: item.note || "",
-        colorClass: item.colorClass || "course-color-sage",
-        weekdayLabel: (item.weekdayLabels || []).join("、") || item.weekdayLabel || "未设置",
-        timeLabel: `${item.startTime || ""}-${item.endTime || ""}`,
-        dateRangeLabel: item.endDate ? `${getPlanStartDateKey(item)} 至 ${item.endDate}` : `${getPlanStartDateKey(item)} 起`,
-      }));
+      .forEach((item) => {
+        const key = item.courseId || item.courseName || item._id;
+        const current = groupedMap.get(key) || {
+          id: key,
+          courseId: item.courseId || "",
+          courseName: item.courseName || "未命名课程",
+          colorClass: item.colorClass || "course-color-sage",
+          note: item.note || "",
+          blocks: [],
+        };
+        current.blocks.push({
+          id: item._id,
+          weekdayLabel: (item.weekdayLabels || []).join("、") || item.weekdayLabel || "未设置",
+          timeLabel: `${item.startTime || ""}-${item.endTime || ""}`,
+          dateRangeLabel: item.endDate ? `${getPlanStartDateKey(item)} 至 ${item.endDate}` : `${getPlanStartDateKey(item)} 起`,
+          note: item.note || "",
+        });
+        if (!current.note && item.note) {
+          current.note = item.note;
+        }
+        groupedMap.set(key, current);
+      });
+
+    return Array.from(groupedMap.values());
   },
 
   syncVisibleCourses() {
@@ -629,13 +646,13 @@ Page({
   },
 
   goEditPlan(e) {
-    const { id } = e.currentTarget.dataset;
-    if (!id) {
+    const { courseId } = e.currentTarget.dataset;
+    if (!courseId) {
       return;
     }
 
     wx.navigateTo({
-      url: `/pages/schedule-edit/index?id=${id}`,
+      url: `/pages/schedule-edit/index?courseId=${courseId}`,
     });
   },
 

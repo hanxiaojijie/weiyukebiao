@@ -110,21 +110,25 @@
   <view class="section">
     <view class="section-head">
       <view class="section-title">已排课程</view>
-      <view class="section-meta">{{plans.length}} 条安排</view>
+      <view class="section-meta">{{groupedPlans.length}} 门课程</view>
     </view>
     <view class="list-card">
-      <view class="empty-hint" wx:if="{{!groupedPlans.length}}">还没有已排课程，可以先补一条固定学习安排。</view>
+      <view class="empty-hint" wx:if="{{!groupedPlans.length}}">还没有已排课程，可以先为某门课安排第一段学习节奏。</view>
       <view class="plan-card-grid">
         <view class="plan-card {{item.colorClass}}" wx:for="{{groupedPlans}}" wx:key="id">
           <view class="row-between">
             <view class="item-title">{{item.courseName}}</view>
-            <view class="tag plan-weekday-tag">{{item.weekdayLabel}}</view>
+            <view class="tag plan-weekday-tag">{{item.blocks.length}} 段排期</view>
           </view>
-          <view class="item-subtitle">{{item.timeLabel}}</view>
-          <view class="item-subtitle">{{item.dateRangeLabel}}</view>
-          <view class="item-meta" wx:if="{{item.note}}">{{item.note}}</view>
+          <view class="plan-block-list">
+            <view class="plan-block-item" wx:for="{{item.blocks}}" wx:key="id">
+              <view class="item-subtitle">{{item.dateRangeLabel}}</view>
+              <view class="item-subtitle">{{item.weekdayLabel}} · {{item.timeLabel}}</view>
+              <view class="item-meta" wx:if="{{item.note}}">{{item.note}}</view>
+            </view>
+          </view>
           <view class="cta-row">
-            <button class="btn-secondary" bindtap="goEditPlan" data-id="{{item.id}}">编辑排期</button>
+            <button class="btn-secondary" bindtap="goEditPlan" data-course-id="{{item.courseId}}">管理排期</button>
           </view>
         </view>
       </view>

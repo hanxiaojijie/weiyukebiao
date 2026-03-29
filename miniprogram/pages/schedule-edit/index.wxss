@@ -57,3 +57,12 @@
   color: #b45264;
   background: #f8dde0;
 }
+
+.block-card {
+  margin-bottom: 16rpx;
+}
+
+.block-head {
+  margin-bottom: 18rpx;
+  align-items: flex-start;
+}

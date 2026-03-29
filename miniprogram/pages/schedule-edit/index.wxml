@@ -7,7 +7,7 @@
 
   <view class="section">
     <view class="limit-banner">
-      当前已编排 {{activePlanCount}} / {{maxActiveCourses}} 门课程。可以给同一门课勾选多个星期，固定晚间时段会更稳定。
+      当前已编排 {{activePlanCount}} / {{maxActiveCourses}} 门课程。现在以课程为中心管理排期，同一门课可连续追加多个阶段。
     </view>
   </view>
 
@@ -19,78 +19,110 @@
           <view class="form-input">{{selectedCourseName}}</view>
         </picker>
       </view>
-      <view class="form-item">
-        <view class="form-label">上课星期</view>
-        <view class="item-subtitle" style="margin-top: 0; margin-bottom: 14rpx;">{{mode === 'edit' ? '编辑这一个阶段的排期块，可同时覆盖多个星期。' : '可多选，保存后会生成一条支持多个星期的阶段排期。'}}</view>
-        <view class="weekday-grid">
-          <view
-            class="weekday-chip {{item.selected ? 'weekday-chip-active' : ''}}"
-            wx:for="{{weekdayOptions}}"
-            wx:key="key"
-            data-key="{{item.key}}"
-            bindtap="onToggleWeekday"
-          >
-            {{item.label}}
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">阶段排期</view>
+      <view class="section-meta">{{blocks.length}} 段</view>
+    </view>
+    <view class="form-card" wx:if="{{loadingBlocks}}">
+      <view class="empty-hint">排期加载中...</view>
+    </view>
+    <view class="stack" wx:else>
+      <view class="form-card block-card" wx:for="{{blocks}}" wx:key="localKey">
+        <view class="row-between block-head">
+          <view>
+            <view class="item-title">第 {{index + 1}} 段排期</view>
+            <view class="item-subtitle">建议把同一阶段的星期节奏放在同一段里维护。</view>
+          </view>
+          <button class="btn-secondary btn-inline btn-danger-light" bindtap="onRemoveBlock" data-local-key="{{item.localKey}}">删除</button>
+        </view>
+
+        <view class="form-item">
+          <view class="form-label">上课星期</view>
+          <view class="weekday-grid">
+            <view
+              class="weekday-chip {{day.selected ? 'weekday-chip-active' : ''}}"
+              wx:for="{{item.weekdayStates}}"
+              wx:key="key"
+              wx:for-item="day"
+              data-key="{{day.key}}"
+              data-local-key="{{item.localKey}}"
+              bindtap="onToggleWeekday"
+            >
+              {{day.label}}
+            </view>
+          </view>
+          <view class="weekday-summary">{{item.weekdaySummary}}</view>
+        </view>
+
+        <view class="form-item">
+          <view class="time-grid">
+            <view class="time-col">
+              <view class="form-label">开始日期</view>
+              <picker mode="date" value="{{item.startDate}}" bindchange="onDateChange" data-field="startDate" data-local-key="{{item.localKey}}">
+                <view class="form-input">{{item.startDate || '请选择开始日期'}}</view>
+              </picker>
+            </view>
+            <view class="time-col">
+              <view class="form-label">课程总时长</view>
+              <input class="form-input" type="digit" placeholder="默认带入课程总时长" value="{{item.totalHours}}" data-field="totalHours" data-local-key="{{item.localKey}}" bindinput="onInputChange" />
+            </view>
           </view>
         </view>
-        <view class="weekday-summary">{{selectedWeekdayLabel}}</view>
-      </view>
-      <view class="form-item">
-        <view class="time-grid">
-          <view class="time-col">
-            <view class="form-label">开始日期</view>
-            <picker mode="date" value="{{form.startDate}}" bindchange="onDateChange" data-field="startDate">
-              <view class="form-input">{{form.startDate || '请选择开始日期'}}</view>
-            </picker>
-          </view>
-          <view class="time-col">
-            <view class="form-label">课程总时长</view>
-            <input class="form-input" type="digit" placeholder="默认带入课程总时长" value="{{form.totalHours}}" data-field="totalHours" bindinput="onInputChange" />
-          </view>
-        </view>
-      </view>
-      <view class="form-item">
-        <view class="time-grid">
-          <view class="time-col">
-            <view class="form-label">开始时间</view>
-            <picker mode="time" value="{{form.startTime}}" bindchange="onInputChange" data-field="startTime">
-              <view class="form-input">{{form.startTime || '请选择开始时间'}}</view>
-            </picker>
-          </view>
-          <view class="time-col">
-            <view class="form-label">结束时间</view>
-            <picker mode="time" value="{{form.endTime}}" bindchange="onInputChange" data-field="endTime">
-              <view class="form-input">{{form.endTime || '请选择结束时间'}}</view>
-            </picker>
+
+        <view class="form-item">
+          <view class="time-grid">
+            <view class="time-col">
+              <view class="form-label">开始时间</view>
+              <picker mode="time" value="{{item.startTime}}" bindchange="onInputChange" data-field="startTime" data-local-key="{{item.localKey}}">
+                <view class="form-input">{{item.startTime || '请选择开始时间'}}</view>
+              </picker>
+            </view>
+            <view class="time-col">
+              <view class="form-label">结束时间</view>
+              <picker mode="time" value="{{item.endTime}}" bindchange="onInputChange" data-field="endTime" data-local-key="{{item.localKey}}">
+                <view class="form-input">{{item.endTime || '请选择结束时间'}}</view>
+              </picker>
+            </view>
           </view>
         </view>
-      </view>
-      <view class="form-item">
-        <view class="time-grid schedule-end-grid">
-          <view class="time-col">
-            <view class="form-label">课程结束日期</view>
-            <picker mode="date" value="{{form.endDate}}" bindchange="onDateChange" data-field="endDate">
-              <view class="form-input">{{form.endDate || '先点击右侧自动计算'}}</view>
-            </picker>
+
+        <view class="form-item">
+          <view class="time-grid schedule-end-grid">
+            <view class="time-col">
+              <view class="form-label">阶段结束日期</view>
+              <picker mode="date" value="{{item.endDate}}" bindchange="onDateChange" data-field="endDate" data-local-key="{{item.localKey}}">
+                <view class="form-input">{{item.endDate || '先点击右侧自动计算'}}</view>
+              </picker>
+            </view>
+            <view class="time-col">
+              <view class="form-label">自动计算</view>
+              <button class="btn-secondary calculate-btn" bindtap="onCalculateEndDate" data-local-key="{{item.localKey}}">计算结束日期</button>
+            </view>
           </view>
-          <view class="time-col">
-            <view class="form-label">自动计算</view>
-            <button class="btn-secondary calculate-btn" bindtap="onCalculateEndDate">计算结束日期</button>
-          </view>
+          <view class="item-subtitle schedule-hint">按每周排课量、开始日期、总时长和每月休息 {{restMonthlyLimit}} 次估算，算完后你仍可手动改。</view>
         </view>
-        <view class="item-subtitle schedule-hint">按每周排课量、开始日期、总时长和每月休息 {{restMonthlyLimit}} 次估算，算完后你仍可手动改。</view>
-        <view class="item-subtitle schedule-hint">如果后续月份节奏变化，请新建另一条排期，而不是把所有月份塞进同一条规则。</view>
+
+        <view class="form-item">
+          <view class="form-label">排期备注</view>
+          <textarea class="form-textarea" placeholder="记录这个阶段为什么这样安排、补课方式或提醒事项" value="{{item.note}}" data-field="note" data-local-key="{{item.localKey}}" bindinput="onInputChange"></textarea>
+        </view>
       </view>
-      <view class="form-item">
-        <view class="form-label">排期备注</view>
-        <textarea class="form-textarea" placeholder="记录为什么安排在这个时间、请假规则、补课方式" value="{{form.note}}" data-field="note" bindinput="onInputChange"></textarea>
+
+      <view class="cta-row">
+        <button class="btn-secondary" bindtap="onAddBlock">追加一个排期阶段</button>
       </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="form-card">
       <view class="cta-row">
         <button class="btn-primary" bindtap="onSavePlan" loading="{{saving}}">{{saveButtonText}}</button>
         <button class="btn-secondary" bindtap="goBack">返回课表</button>
-      </view>
-      <view class="cta-row" wx:if="{{mode === 'edit'}}">
-        <button class="btn-secondary btn-danger-light" bindtap="onDisablePlan" loading="{{saving}}">停用这条排期</button>
       </view>
     </view>
   </view>
