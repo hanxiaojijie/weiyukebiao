@@ -28,8 +28,6 @@
         <input class="form-input" type="number" value="{{form.restMonthlyLimit}}" data-field="restMonthlyLimit" bindinput="onInputChange" placeholder="例如：4" />
       </view>
       <view class="form-item">
-        <view class="form-label">全局手动校正</view>
-        <input class="form-input" value="{{form.manualAdjustment}}" data-field="manualAdjustment" bindinput="onInputChange" placeholder="例如：0" />
         <view class="item-subtitle">请假默认不计分，休息会占用每月次数，旷课按上面的扣分规则处理。</view>
       </view>
       <view class="cta-row">

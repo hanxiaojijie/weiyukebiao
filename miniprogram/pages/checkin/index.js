@@ -74,7 +74,22 @@ function mapPlanToSession(plan) {
     finishedAt: "",
     actualMinutes: minutes,
     creditHint: "",
+    summaryText: plan.note || "",
   };
+}
+
+function getSessionSummary(session = {}) {
+  if (session.stage === "已完成") {
+    const creditText =
+      Number(session.earnedCredits || 0) > 0
+        ? `本次学分 +${session.earnedCredits}`
+        : Number(session.earnedCredits || 0) < 0
+          ? `本次学分 ${session.earnedCredits}`
+          : "";
+    return [session.note, creditText].filter(Boolean).join(" · ");
+  }
+
+  return session.note || "";
 }
 
 function getStageLabel(status) {
@@ -273,11 +288,15 @@ Page({
           earnedCredits: Number(existing.earnedCredits || 0),
         };
       });
-      const nextActiveSession = pickActiveSession(mergedSessions);
+      const normalizedSessions = mergedSessions.map((item) => ({
+        ...item,
+        summaryText: getSessionSummary(item),
+      }));
+      const nextActiveSession = pickActiveSession(normalizedSessions);
 
       this.setData({
         todayDateKey,
-        pendingList: mergedSessions,
+        pendingList: normalizedSessions,
         activeSession: nextActiveSession,
         studyNote: nextActiveSession?.studyNote || "",
         leaveReason: nextActiveSession?.leaveReason || "",
@@ -286,11 +305,15 @@ Page({
       });
     } catch (error) {
       const fallbackActiveSession = pickActiveSession(sessions);
+      const fallbackSessions = sessions.map((item) => ({
+        ...item,
+        summaryText: getSessionSummary(item),
+      }));
       console.error("读取今日打卡记录失败", error);
       this.setData({
         todayDateKey,
-        pendingList: sessions,
-        activeSession: fallbackActiveSession,
+        pendingList: fallbackSessions,
+        activeSession: fallbackSessions.find((item) => item.planId === fallbackActiveSession?.planId) || fallbackActiveSession,
         studyNote: fallbackActiveSession?.studyNote || "",
         leaveReason: fallbackActiveSession?.leaveReason || "",
         actualMinutesInput: fallbackActiveSession ? `${fallbackActiveSession.actualMinutes || fallbackActiveSession.minutes || 0}` : "",
@@ -745,15 +768,16 @@ Page({
 
   updateSessionInList(nextSession) {
     const pendingList = this.data.pendingList.map((item) =>
-      item.planId === nextSession.planId ? nextSession : item
+      item.planId === nextSession.planId ? { ...nextSession, summaryText: getSessionSummary(nextSession) } : item
     );
+    const normalizedSession = { ...nextSession, summaryText: getSessionSummary(nextSession) };
 
     this.setData({
       pendingList,
-      activeSession: nextSession,
-      studyNote: nextSession.studyNote || "",
-      leaveReason: nextSession.leaveReason || "",
-      actualMinutesInput: `${nextSession.actualMinutes || nextSession.minutes || 0}`,
+      activeSession: normalizedSession,
+      studyNote: normalizedSession.studyNote || "",
+      leaveReason: normalizedSession.leaveReason || "",
+      actualMinutesInput: `${normalizedSession.actualMinutes || normalizedSession.minutes || 0}`,
     });
   },
 });

@@ -2,7 +2,7 @@
   <view class="hero-card">
     <view class="page-kicker">未雨课表</view>
     <view class="page-title">一个主奖励，承接长期动力。</view>
-    <view class="page-desc">主奖励会跟随学分自动推进，也支持你手动校正目标进度。</view>
+    <view class="page-desc">主奖励会跟随学分自动推进。</view>
     <view class="progress-track">
       <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
     </view>
@@ -17,10 +17,6 @@
       <view class="form-item">
         <view class="form-label">目标学分</view>
         <input class="form-input" placeholder="例如：188" value="{{form.targetCredits}}" data-field="targetCredits" bindinput="onInputChange" />
-      </view>
-      <view class="form-item">
-        <view class="form-label">手动校正</view>
-        <input class="form-input" placeholder="例如：10 或 -5" value="{{form.manualAdjustment}}" data-field="manualAdjustment" bindinput="onInputChange" />
       </view>
       <view class="form-item">
         <view class="form-label">奖励说明</view>

@@ -2,13 +2,12 @@
   <view class="hero-card">
     <view class="page-kicker">未雨课表</view>
     <view class="page-title">今日总览</view>
-    <view class="page-desc">{{nextPlan ? ('下一节：' + nextPlan.courseName + ' · ' + nextPlan.time) : '把今天该做的事，收进一眼能看懂的总览里。'}}</view>
     <view class="metric-row">
-      <view class="metric-pill">
+      <view class="metric-pill metric-pill-inline">
         <view class="metric-label">当前学分</view>
         <view class="metric-value">{{totalCredits}}</view>
       </view>
-      <view class="metric-pill">
+      <view class="metric-pill metric-pill-inline">
         <view class="metric-label">连续学习</view>
         <view class="metric-value">{{streakDays}} 天</view>
       </view>
@@ -55,24 +54,16 @@
   <view class="section">
     <view class="section-head">
       <view class="section-title">本周进度</view>
-      <view class="section-meta">{{weekSummary.total}} 节安排</view>
+      <view class="section-meta">{{weekSummary.done}} / {{weekSummary.total}}</view>
     </view>
-    <view class="grid-4">
+    <view class="grid-2">
       <view class="mini-stat">
-        <view class="mini-stat-value">{{weekSummary.done}}</view>
-        <view class="mini-stat-label">已完成</view>
-      </view>
-      <view class="mini-stat">
-        <view class="mini-stat-value">{{weekSummary.pending}}</view>
-        <view class="mini-stat-label">待开始 / 进行中</view>
+        <view class="mini-stat-value">{{weekSummary.done}} / {{weekSummary.total}}</view>
+        <view class="mini-stat-label">已完成 / 总课次</view>
       </view>
       <view class="mini-stat">
         <view class="mini-stat-value">{{weekSummary.special}}</view>
         <view class="mini-stat-label">请假 / 休息 / 旷课</view>
-      </view>
-      <view class="mini-stat">
-        <view class="mini-stat-value">{{weekSummary.total}}</view>
-        <view class="mini-stat-label">本周总课次</view>
       </view>
     </view>
   </view>

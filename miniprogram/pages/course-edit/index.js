@@ -176,6 +176,15 @@ Page({
       return;
     }
 
+    const openid = await ensureLogin();
+    if (!openid) {
+      wx.showToast({
+        title: "登录初始化失败",
+        icon: "none",
+      });
+      return;
+    }
+
     const { form } = this.data;
     const selectedColor = this.getCategoryColor(form.category.trim());
 
@@ -201,6 +210,10 @@ Page({
       };
 
       if (this.data.mode === "edit" && this.data.courseId) {
+        const { data: currentCourse } = await db.collection("courses").doc(this.data.courseId).get();
+        if (currentCourse?._openid && currentCourse._openid !== openid) {
+          throw new Error("permission denied");
+        }
         await db.collection("courses").doc(this.data.courseId).update({
           data: payload,
         });
@@ -231,7 +244,7 @@ Page({
     } catch (error) {
       console.error("保存课程失败", error);
       wx.showToast({
-        title: "保存失败，请稍后重试",
+        title: error?.message === "permission denied" ? "你只能编辑自己创建的课程" : "保存失败，请稍后重试",
         icon: "none",
       });
     } finally {

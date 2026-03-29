@@ -37,6 +37,10 @@
   margin-top: 12rpx;
 }
 
+.session-summary {
+  margin-top: 10rpx;
+}
+
 .status-actions {
   display: flex;
   gap: 12rpx;

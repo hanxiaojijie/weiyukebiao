@@ -1,11 +1,12 @@
 <view class="page-shell theme-{{themeKey}}">
   <view class="hero-card">
-    <view class="page-kicker">未雨课表</view>
-    <view class="page-title">个人课表</view>
-    <view class="page-desc">查看和管理你的学习安排。</view>
-    <view class="cta-row">
+    <view class="hero-top">
+      <view class="hero-copy">
+        <view class="page-kicker">未雨课表</view>
+        <view class="page-title">个人课表</view>
+        <view class="page-desc">查看和管理你的学习安排。</view>
+      </view>
       <button class="btn-primary" bindtap="goSchedule">编排课表</button>
-      <button class="btn-secondary" bindtap="onJumpToday">回到今天</button>
     </view>
   </view>
 
@@ -14,7 +15,10 @@
       <view class="section-title">时段课表</view>
       <view class="section-meta" bindtap="onJumpToday">{{currentWeekLabel || '本周'}} · {{activePlanCount}} / {{maxActiveCourses}} 门进行中</view>
     </view>
-    <view class="limit-banner">当前最多同时维持 {{maxActiveCourses}} 门课程。</view>
+    <view class="row-between schedule-toolbar">
+      <view class="limit-banner schedule-limit">当前最多同时维持 {{maxActiveCourses}} 门课程。</view>
+      <button class="btn-secondary btn-inline" bindtap="onJumpToday">回到今天</button>
+    </view>
     <view class="panel-card timetable-shell" style="margin-top: 14rpx;">
       <view class="week-layout">
         <view class="time-axis">
@@ -34,12 +38,12 @@
         >
           <swiper-item class="timetable-week-page" wx:for="{{weekPages}}" wx:key="id">
             <view class="day-columns">
-              <view class="day-column {{day.isPast ? 'day-column-past' : ''}}" wx:for="{{item.columns}}" wx:for-item="day" wx:key="dateKey">
+              <view class="day-column {{day.isPast ? 'day-column-past' : ''}} {{day.isToday ? 'day-column-today' : ''}}" wx:for="{{item.columns}}" wx:for-item="day" wx:key="dateKey">
                 <view class="day-column-head {{day.isToday ? 'day-column-head-today' : ''}} {{day.isPast ? 'day-column-head-past' : ''}}">
                   <view>{{day.weekdayLabel}}</view>
                   <view class="day-date">{{day.dateLabel}}</view>
                 </view>
-                <view class="day-track {{day.isPast ? 'day-track-past' : ''}}">
+                <view class="day-track {{day.isPast ? 'day-track-past' : ''}} {{day.isToday ? 'day-track-today' : ''}}">
                   <view
                     class="day-slot {{slot.compact ? 'day-slot-compact' : ''}} {{day.isPast ? 'day-slot-past' : ''}}"
                     wx:for="{{day.slots}}"
@@ -76,6 +80,34 @@
 
   <view class="section">
     <view class="section-head">
+      <view class="section-title">已排课程</view>
+      <view class="section-meta">{{groupedPlans.length}} 门课程</view>
+    </view>
+    <view class="list-card">
+      <view class="empty-hint" wx:if="{{!groupedPlans.length}}">还没有已排课程，可以先为某门课安排第一段学习节奏。</view>
+      <view class="plan-card-grid">
+        <view class="plan-card {{item.colorClass}}" wx:for="{{groupedPlans}}" wx:key="id">
+          <view class="row-between">
+            <view class="item-title">{{item.courseName}}</view>
+            <view class="tag plan-weekday-tag">{{item.blocks.length}} 段排期</view>
+          </view>
+          <view class="plan-block-list">
+            <view class="plan-block-item" wx:for="{{item.blocks}}" wx:key="id">
+              <view class="item-subtitle">{{item.dateRangeLabel}}</view>
+              <view class="item-subtitle">{{item.weekdayLabel}} · {{item.timeLabel}}</view>
+              <view class="item-meta" wx:if="{{item.note}}">{{item.note}}</view>
+            </view>
+          </view>
+          <view class="cta-row">
+            <button class="btn-secondary" bindtap="goEditPlan" data-course-id="{{item.courseId}}">管理排期</button>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
       <view class="section-title">共享课程库</view>
       <view class="section-meta">{{courses.length}} 门课程</view>
     </view>
@@ -103,34 +135,6 @@
       </view>
       <view class="cta-row" wx:if="{{courses.length > 10}}">
         <button class="btn-secondary" bindtap="onToggleMoreCourses">{{showAllCourses ? '收起课程' : '查看更多'}}</button>
-      </view>
-    </view>
-  </view>
-
-  <view class="section">
-    <view class="section-head">
-      <view class="section-title">已排课程</view>
-      <view class="section-meta">{{groupedPlans.length}} 门课程</view>
-    </view>
-    <view class="list-card">
-      <view class="empty-hint" wx:if="{{!groupedPlans.length}}">还没有已排课程，可以先为某门课安排第一段学习节奏。</view>
-      <view class="plan-card-grid">
-        <view class="plan-card {{item.colorClass}}" wx:for="{{groupedPlans}}" wx:key="id">
-          <view class="row-between">
-            <view class="item-title">{{item.courseName}}</view>
-            <view class="tag plan-weekday-tag">{{item.blocks.length}} 段排期</view>
-          </view>
-          <view class="plan-block-list">
-            <view class="plan-block-item" wx:for="{{item.blocks}}" wx:key="id">
-              <view class="item-subtitle">{{item.dateRangeLabel}}</view>
-              <view class="item-subtitle">{{item.weekdayLabel}} · {{item.timeLabel}}</view>
-              <view class="item-meta" wx:if="{{item.note}}">{{item.note}}</view>
-            </view>
-          </view>
-          <view class="cta-row">
-            <button class="btn-secondary" bindtap="goEditPlan" data-course-id="{{item.courseId}}">管理排期</button>
-          </view>
-        </view>
       </view>
     </view>
   </view>

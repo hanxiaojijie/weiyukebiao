@@ -37,7 +37,7 @@
             <view class="item-title">第 {{index + 1}} 段排期</view>
             <view class="item-subtitle">建议把同一阶段的星期节奏放在同一段里维护。</view>
           </view>
-          <button class="btn-secondary btn-inline btn-danger-light" bindtap="onRemoveBlock" data-local-key="{{item.localKey}}">删除</button>
+          <button class="btn-secondary btn-inline btn-danger-light" wx:if="{{index > 0}}" bindtap="onRemoveBlock" data-local-key="{{item.localKey}}">删除</button>
         </view>
 
         <view class="form-item">

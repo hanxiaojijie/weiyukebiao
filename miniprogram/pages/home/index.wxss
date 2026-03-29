@@ -1,3 +1,14 @@
 .section-meta {
   padding: 8rpx 0;
 }
+
+.metric-pill-inline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.metric-pill-inline .metric-value {
+  font-size: 34rpx;
+}
