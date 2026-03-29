@@ -1,5 +1,6 @@
 const { applyTheme } = require("../../utils/theme");
 const { ensureLogin } = require("../../utils/auth");
+const { fetchAllDocs } = require("../../utils/database");
 const {
   addDays,
   doesPlanOccurOnDate,
@@ -73,7 +74,18 @@ function getStatusMeta(checkin) {
   }
 }
 
-function createPageColumns(startDate, planList = [], checkinMap = new Map()) {
+function buildPlanSlotIndex(planList = []) {
+  return planList.reduce((indexMap, plan) => {
+    const slotKey = getSlotKeyByTime(plan.startTime);
+    const key = `${plan.weekday}|${slotKey}`;
+    const current = indexMap.get(key) || [];
+    current.push(plan);
+    indexMap.set(key, current);
+    return indexMap;
+  }, new Map());
+}
+
+function createPageColumns(startDate, planSlotIndex = new Map(), checkinMap = new Map()) {
   const todayKey = getDateKey(new Date());
   const columns = [];
 
@@ -94,7 +106,7 @@ function createPageColumns(startDate, planList = [], checkinMap = new Map()) {
         ...slot,
         defaultStartTime: slot.key === "daytime" ? "08:00" : slot.key === "afterwork" ? "17:00" : slot.key === "prime" ? "19:00" : slot.key === "night" ? "21:00" : "22:30",
         defaultEndTime: slot.key === "daytime" ? "17:00" : slot.key === "afterwork" ? "19:00" : slot.key === "prime" ? "21:00" : slot.key === "night" ? "22:30" : "24:00",
-        schedule: getScheduleForDate(planList, checkinMap, date, slot.key),
+        schedule: getScheduleForDate(planSlotIndex, checkinMap, date, slot.key),
       })),
     });
   }
@@ -102,7 +114,7 @@ function createPageColumns(startDate, planList = [], checkinMap = new Map()) {
   return columns;
 }
 
-function buildPageRange(rangeStartDate, pageCount, planList = [], checkinMap = new Map()) {
+function buildPageRange(rangeStartDate, pageCount, planSlotIndex = new Map(), checkinMap = new Map()) {
   const today = new Date();
   const currentWeekStart = getWeekStart(today);
   const weekPages = [];
@@ -110,7 +122,7 @@ function buildPageRange(rangeStartDate, pageCount, planList = [], checkinMap = n
   let currentPageStart = new Date(rangeStartDate);
 
   for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
-    const columns = createPageColumns(currentPageStart, planList, checkinMap);
+    const columns = createPageColumns(currentPageStart, planSlotIndex, checkinMap);
     const lastColumn = columns[columns.length - 1];
 
     weekPages.push({
@@ -157,10 +169,10 @@ function getSlotKeyByTime(startTime) {
   return "late";
 }
 
-function getScheduleForDate(planList, checkinMap, date, slotKey) {
+function getScheduleForDate(planSlotIndex, checkinMap, date, slotKey) {
   const weekdayKey = getWeekdayKey(date);
-  const matchedPlans = planList.filter(
-    (plan) => doesPlanOccurOnDate(plan, date) && plan.weekday === weekdayKey && getSlotKeyByTime(plan.startTime) === slotKey
+  const matchedPlans = (planSlotIndex.get(`${weekdayKey}|${slotKey}`) || []).filter((plan) =>
+    doesPlanOccurOnDate(plan, date)
   );
 
   if (!matchedPlans.length) {
@@ -187,6 +199,10 @@ function getScheduleForDate(planList, checkinMap, date, slotKey) {
   };
 }
 
+function getPageRangeEnd(startDate, pageCount) {
+  return addDays(startDate, pageCount * DAYS_PER_PAGE - 1);
+}
+
 Page({
   data: {
     themeKey: "strawberry",
@@ -202,19 +218,24 @@ Page({
     loadingCourses: false,
     visibleCourses: [],
     showAllCourses: false,
-    rawPlans: [],
     plans: [],
-    checkins: [],
     groupedPlans: [],
     actionLoading: false,
   },
 
   onLoad() {
+    this.openid = "";
+    this.rawPlans = [];
+    this.planSlotIndex = new Map();
+    this.checkinMap = new Map();
+    this.loadedCheckinRange = null;
+    this.extendingPages = false;
     const todayRangeStart = addDays(getWeekStart(new Date()), INITIAL_PAGES_BEFORE * DAYS_PER_PAGE * -1);
     const { weekPages, currentWeekIndex } = buildPageRange(
       todayRangeStart,
       INITIAL_PAGES_BEFORE + INITIAL_PAGES_AFTER + 1,
-      []
+      this.planSlotIndex,
+      this.checkinMap
     );
     this.setData({
       weekPages,
@@ -270,6 +291,78 @@ Page({
     }
   },
 
+  async ensureCheckinsForRange(startDate, endDate) {
+    if (!this.openid || !startDate || !endDate) {
+      return;
+    }
+
+    const nextStartKey = getDateKey(startDate);
+    const nextEndKey = getDateKey(endDate);
+    const missingRanges = [];
+
+    if (!this.loadedCheckinRange) {
+      missingRanges.push({ startKey: nextStartKey, endKey: nextEndKey });
+    } else {
+      if (nextStartKey < this.loadedCheckinRange.start) {
+        const previousLoadedStartDate = addDays(parseDateKey(this.loadedCheckinRange.start), -1);
+        missingRanges.push({
+          startKey: nextStartKey,
+          endKey: getDateKey(previousLoadedStartDate),
+        });
+      }
+
+      if (nextEndKey > this.loadedCheckinRange.end) {
+        missingRanges.push({
+          startKey: getDateKey(addDays(parseDateKey(this.loadedCheckinRange.end), 1)),
+          endKey: nextEndKey,
+        });
+      }
+    }
+
+    const validMissingRanges = missingRanges.filter((range) => range.startKey <= range.endKey);
+    if (!validMissingRanges.length) {
+      return;
+    }
+
+    const dbCommand = db.command;
+    const results = await Promise.all(
+      validMissingRanges.map((range) =>
+        fetchAllDocs("checkins", {
+          where: {
+            openid: this.openid,
+            dateKey: dbCommand.gte(range.startKey).and(dbCommand.lte(range.endKey)),
+          },
+          fields: {
+            planId: true,
+            dateKey: true,
+            status: true,
+            earnedCredits: true,
+          },
+          pageSize: 100,
+        })
+      )
+    );
+
+    results.flat().forEach((item) => {
+      if (item.planId && item.dateKey) {
+        this.checkinMap.set(`${item.planId}|${item.dateKey}`, item);
+      }
+    });
+
+    if (!this.loadedCheckinRange) {
+      this.loadedCheckinRange = {
+        start: nextStartKey,
+        end: nextEndKey,
+      };
+      return;
+    }
+
+    this.loadedCheckinRange = {
+      start: nextStartKey < this.loadedCheckinRange.start ? nextStartKey : this.loadedCheckinRange.start,
+      end: nextEndKey > this.loadedCheckinRange.end ? nextEndKey : this.loadedCheckinRange.end,
+    };
+  },
+
   async loadPlans() {
     try {
       const openid = await ensureLogin();
@@ -277,38 +370,46 @@ Page({
         return;
       }
 
-      const [planRes, checkinRes] = await Promise.all([
-        db
-          .collection("user_course_plans")
-          .where({
-            openid,
-            status: "active",
-          })
-          .orderBy("createdAt", "desc")
-          .limit(100)
-          .get(),
-        db
-          .collection("checkins")
-          .where({
-            openid,
-          })
-          .limit(500)
-          .get(),
-      ]);
+      const planRes = await db
+        .collection("user_course_plans")
+        .where({
+          openid,
+          status: "active",
+        })
+        .field({
+          _id: true,
+          courseId: true,
+          courseName: true,
+          weekday: true,
+          weekdayLabel: true,
+          startDate: true,
+          endDate: true,
+          startTime: true,
+          endTime: true,
+          note: true,
+          colorClass: true,
+          createdAt: true,
+        })
+        .orderBy("createdAt", "desc")
+        .limit(100)
+        .get();
 
       const data = planRes.data || [];
-      const checkins = checkinRes.data || [];
-      const checkinMap = new Map(
-        checkins
-          .filter((item) => item.planId && item.dateKey)
-          .map((item) => [`${item.planId}|${item.dateKey}`, item])
-      );
+      this.openid = openid;
+      this.rawPlans = data;
+      this.planSlotIndex = buildPlanSlotIndex(data);
+      this.checkinMap = new Map();
+      this.loadedCheckinRange = null;
       const todayRangeStart = addDays(getWeekStart(new Date()), INITIAL_PAGES_BEFORE * DAYS_PER_PAGE * -1);
+      await this.ensureCheckinsForRange(
+        todayRangeStart,
+        getPageRangeEnd(todayRangeStart, INITIAL_PAGES_BEFORE + INITIAL_PAGES_AFTER + 1)
+      );
       const { weekPages, currentWeekIndex } = buildPageRange(
         todayRangeStart,
         INITIAL_PAGES_BEFORE + INITIAL_PAGES_AFTER + 1,
-        data,
-        checkinMap
+        this.planSlotIndex,
+        this.checkinMap
       );
       const todayKey = getDateKey(new Date());
       const effectivePlans = data.filter((item) => !item.endDate || item.endDate >= todayKey);
@@ -316,7 +417,6 @@ Page({
       const groupedPlans = this.groupPlans(effectivePlans);
 
       this.setData({
-        rawPlans: data,
         plans: data.map((item) => ({
           id: item._id,
           courseId: item.courseId || "",
@@ -326,7 +426,6 @@ Page({
           endTime: item.endTime || "",
           note: item.note || "",
         })),
-        checkins,
         groupedPlans,
         activePlanCount: activeCourseIds.size,
         weekPages,
@@ -394,8 +493,8 @@ Page({
     const { weekPages, currentWeekIndex } = buildPageRange(
       todayRangeStart,
       INITIAL_PAGES_BEFORE + INITIAL_PAGES_AFTER + 1,
-      this.data.rawPlans,
-      this.buildCheckinMap()
+      this.planSlotIndex,
+      this.checkinMap
     );
     this.setData({
       weekPages,
@@ -415,70 +514,82 @@ Page({
       currentWeekIndex,
       currentWeekLabel: this.data.weekPages[currentWeekIndex]?.label || "",
     };
-    this.setData(updates, () => {
-      this.extendPagesIfNeeded(currentWeekIndex);
-    });
+    this.setData(updates);
+    this.extendPagesIfNeeded(currentWeekIndex);
   },
 
-  buildCheckinMap() {
-    return new Map(
-      (this.data.checkins || [])
-        .filter((item) => item.planId && item.dateKey)
-        .map((item) => [`${item.planId}|${item.dateKey}`, item])
-    );
-  },
+  async extendPagesIfNeeded(currentWeekIndex) {
+    if (this.extendingPages) {
+      return;
+    }
 
-  extendPagesIfNeeded(currentWeekIndex) {
     if (currentWeekIndex <= 1) {
-      this.prependPages();
+      await this.prependPages();
       return;
     }
 
     if (currentWeekIndex >= this.data.weekPages.length - 2) {
-      this.appendPages();
+      await this.appendPages();
     }
   },
 
-  prependPages() {
+  async prependPages() {
     const rangeStartDate = parseDateKey(this.data.pageRangeStart);
     const nextRangeStartDate = addDays(rangeStartDate, DAYS_PER_PAGE * EXTEND_PAGES_COUNT * -1);
-    const prependedPages = buildPageRange(
-      nextRangeStartDate,
-      EXTEND_PAGES_COUNT,
-      this.data.rawPlans,
-      this.buildCheckinMap()
-    ).weekPages;
+    this.extendingPages = true;
 
-    const weekPages = [...prependedPages, ...this.data.weekPages];
-    const currentWeekIndex = this.data.currentWeekIndex + prependedPages.length;
-    this.setData({
-      weekPages,
-      currentWeekIndex,
-      currentWeekLabel: weekPages[currentWeekIndex]?.label || "",
-      pageRangeStart: getDateKey(nextRangeStartDate),
-    });
+    try {
+      await this.ensureCheckinsForRange(nextRangeStartDate, addDays(rangeStartDate, -1));
+      const prependedPages = buildPageRange(
+        nextRangeStartDate,
+        EXTEND_PAGES_COUNT,
+        this.planSlotIndex,
+        this.checkinMap
+      ).weekPages;
+
+      const weekPages = [...prependedPages, ...this.data.weekPages];
+      const currentWeekIndex = this.data.currentWeekIndex + prependedPages.length;
+      this.setData({
+        weekPages,
+        currentWeekIndex,
+        currentWeekLabel: weekPages[currentWeekIndex]?.label || "",
+        pageRangeStart: getDateKey(nextRangeStartDate),
+      });
+    } finally {
+      this.extendingPages = false;
+    }
   },
 
-  appendPages() {
+  async appendPages() {
     const lastPage = this.data.weekPages[this.data.weekPages.length - 1];
     if (!lastPage) {
       return;
     }
 
     const lastDateKey = lastPage.columns[lastPage.columns.length - 1]?.dateKey;
-    const appendStartDate = addDays(new Date(lastDateKey), 1);
-    const appendedPages = buildPageRange(
-      appendStartDate,
-      EXTEND_PAGES_COUNT,
-      this.data.rawPlans,
-      this.buildCheckinMap()
-    ).weekPages;
+    const appendStartDate = addDays(parseDateKey(lastDateKey), 1);
+    this.extendingPages = true;
 
-    const weekPages = [...this.data.weekPages, ...appendedPages];
-    this.setData({
-      weekPages,
-      currentWeekLabel: weekPages[this.data.currentWeekIndex]?.label || "",
-    });
+    try {
+      await this.ensureCheckinsForRange(
+        appendStartDate,
+        getPageRangeEnd(appendStartDate, EXTEND_PAGES_COUNT)
+      );
+      const appendedPages = buildPageRange(
+        appendStartDate,
+        EXTEND_PAGES_COUNT,
+        this.planSlotIndex,
+        this.checkinMap
+      ).weekPages;
+
+      const weekPages = [...this.data.weekPages, ...appendedPages];
+      this.setData({
+        weekPages,
+        currentWeekLabel: weekPages[this.data.currentWeekIndex]?.label || "",
+      });
+    } finally {
+      this.extendingPages = false;
+    }
   },
 
   onTapSlot(e) {

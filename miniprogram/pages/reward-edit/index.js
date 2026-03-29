@@ -42,7 +42,9 @@ Page({
         fetchAllDocs("checkins", {
           where: {
             openid,
-            status: "done",
+          },
+          fields: {
+            earnedCredits: true,
           },
           pageSize: 100,
         }),

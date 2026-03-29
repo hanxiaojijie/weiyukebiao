@@ -6,10 +6,11 @@ const {
   ensureSingleDoc,
 } = require("../../utils/learning");
 const { ensureLogin } = require("../../utils/auth");
-const { fetchAllDocs } = require("../../utils/database");
+const { countDocs, fetchAllDocs, fetchDocs } = require("../../utils/database");
 const { doesPlanOccurOnDate } = require("../../utils/schedule");
 
 const db = wx.cloud.database();
+const _ = db.command;
 
 const WEEKDAY_MAP = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
@@ -285,14 +286,15 @@ Page({
         loadingPlans: false,
       });
     } catch (error) {
+      const fallbackActiveSession = pickActiveSession(sessions);
       console.error("读取今日打卡记录失败", error);
       this.setData({
         todayDateKey,
         pendingList: sessions,
-        activeSession: pickActiveSession(sessions),
-        studyNote: pickActiveSession(sessions)?.studyNote || "",
-        leaveReason: pickActiveSession(sessions)?.leaveReason || "",
-        actualMinutesInput: pickActiveSession(sessions) ? `${pickActiveSession(sessions).actualMinutes || pickActiveSession(sessions).minutes || 0}` : "",
+        activeSession: fallbackActiveSession,
+        studyNote: fallbackActiveSession?.studyNote || "",
+        leaveReason: fallbackActiveSession?.leaveReason || "",
+        actualMinutesInput: fallbackActiveSession ? `${fallbackActiveSession.actualMinutes || fallbackActiveSession.minutes || 0}` : "",
         loadingPlans: false,
       });
     }
@@ -305,7 +307,7 @@ Page({
         return;
       }
 
-      const data = await fetchAllDocs("checkins", {
+      const data = await fetchDocs("checkins", {
         where: {
           openid,
         },
@@ -313,11 +315,21 @@ Page({
           field: "updatedAt",
           direction: "desc",
         },
-        pageSize: 100,
+        fields: {
+          _id: true,
+          courseName: true,
+          status: true,
+          studyNote: true,
+          actualMinutes: true,
+          plannedMinutes: true,
+          leaveReason: true,
+          earnedCredits: true,
+        },
+        limit: 10,
       });
 
       this.setData({
-        recentList: data.slice(0, 10).map(getRecentItem),
+        recentList: data.map(getRecentItem),
       });
     } catch (error) {
       console.error("读取最近打卡失败", error);
@@ -569,15 +581,15 @@ Page({
       const creditRule = await ensureSingleDoc("credit_rules", DEFAULT_CREDIT_RULE, openid);
       if (status === "rest") {
         const monthKey = getMonthKey();
-        const monthRests = await fetchAllDocs("checkins", {
+        const monthStartDateKey = `${monthKey}-01`;
+        const monthRestCount = await countDocs("checkins", {
           where: {
             openid,
             status: "rest",
+            dateKey: _.gte(monthStartDateKey).and(_.lt(`${monthKey}-32`)),
           },
-          pageSize: 100,
         });
-        const restCount = monthRests.filter((item) => (item.dateKey || "").startsWith(monthKey)).length;
-        if (restCount >= Number(creditRule.restMonthlyLimit || DEFAULT_CREDIT_RULE.restMonthlyLimit)) {
+        if (monthRestCount >= Number(creditRule.restMonthlyLimit || DEFAULT_CREDIT_RULE.restMonthlyLimit)) {
           throw new Error("rest limit exceeded");
         }
       }

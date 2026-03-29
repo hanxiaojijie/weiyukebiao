@@ -109,10 +109,22 @@ Page({
       const [plans, allCheckins] = await Promise.all([
         fetchAllDocs("user_course_plans", {
           where: { openid, status: "active" },
+          fields: {
+            weekday: true,
+            startDate: true,
+            endDate: true,
+          },
           pageSize: 100,
         }),
         fetchAllDocs("checkins", {
           where: { openid },
+          fields: {
+            status: true,
+            dateKey: true,
+            actualMinutes: true,
+            plannedMinutes: true,
+            finishedAt: true,
+          },
           pageSize: 100,
         }),
       ]);

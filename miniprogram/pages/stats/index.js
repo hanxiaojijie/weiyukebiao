@@ -9,7 +9,6 @@ const {
 const { ensureLogin } = require("../../utils/auth");
 const { fetchAllDocs } = require("../../utils/database");
 const { countPlannedSessions } = require("../../utils/schedule");
-const db = wx.cloud.database();
 
 function pad(value) {
   return `${value}`.padStart(2, "0");
@@ -56,10 +55,22 @@ Page({
       const [plans, allCheckins, rewardDoc, creditRule] = await Promise.all([
         fetchAllDocs("user_course_plans", {
           where: { openid, status: "active" },
+          fields: {
+            weekday: true,
+            startDate: true,
+            endDate: true,
+          },
           pageSize: 100,
         }),
         fetchAllDocs("checkins", {
           where: { openid },
+          fields: {
+            status: true,
+            dateKey: true,
+            actualMinutes: true,
+            plannedMinutes: true,
+            earnedCredits: true,
+          },
           pageSize: 100,
         }),
         ensureSingleDoc("rewards", DEFAULT_REWARD, openid),
