@@ -1,4 +1,5 @@
 const { applyTheme } = require("../../utils/theme");
+const { ensureLogin } = require("../../utils/auth");
 
 const db = wx.cloud.database();
 
@@ -73,7 +74,25 @@ Page({
 
   async loadCourseDetail() {
     try {
+      const openid = await ensureLogin();
+      if (!openid) {
+        throw new Error("missing openid");
+      }
+
       const { data } = await db.collection("courses").doc(this.data.courseId).get();
+      if (data._openid && data._openid !== openid) {
+        wx.showToast({
+          title: "你只能编辑自己创建的课程",
+          icon: "none",
+        });
+        setTimeout(() => {
+          wx.navigateBack({
+            delta: 1,
+          });
+        }, 300);
+        return;
+      }
+
       this.setData({
         form: {
           name: data.name || "",
@@ -90,7 +109,7 @@ Page({
     } catch (error) {
       console.error("读取课程失败", error);
       wx.showToast({
-        title: "课程读取失败",
+        title: error?.message === "missing openid" ? "登录初始化失败" : "课程读取失败",
         icon: "none",
       });
     }

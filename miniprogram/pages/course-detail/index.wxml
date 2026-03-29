@@ -5,7 +5,7 @@
     <view class="page-desc">{{course.description}}</view>
     <view class="cta-row">
       <button class="btn-primary" bindtap="goSchedule">添加我的计划</button>
-      <button class="btn-secondary" bindtap="goEditCourse">编辑课程</button>
+      <button class="btn-secondary" wx:if="{{canEditCourse}}" bindtap="goEditCourse">编辑课程</button>
     </view>
   </view>
 

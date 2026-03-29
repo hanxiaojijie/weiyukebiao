@@ -44,6 +44,7 @@ Page({
     courseId: "",
     loading: true,
     course: null,
+    canEditCourse: false,
     materials: [],
     metrics: {
       activePlans: 0,
@@ -133,6 +134,7 @@ Page({
           colorName: course.colorName || "未设颜色",
           colorClass: course.colorClass || "course-color-sage",
         },
+        canEditCourse: course._openid === openid,
         materials,
         metrics,
       });
@@ -155,8 +157,16 @@ Page({
   },
 
   goEditCourse() {
-    const { courseId } = this.data;
+    const { courseId, canEditCourse } = this.data;
     if (!courseId) {
+      return;
+    }
+
+    if (!canEditCourse) {
+      wx.showToast({
+        title: "你只能编辑自己创建的课程",
+        icon: "none",
+      });
       return;
     }
 
